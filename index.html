@@ -339,7 +339,7 @@ const initial={cash:0,xp:0,level:1,heat:0,hacks:0,rep:0,skill:0,lat:null,lon:nul
 let S=Object.assign({},initial,JSON.parse(localStorage.getItem("shadowgrid")||"{}"));
 S.upgrades=Object.assign({},initial.upgrades,S.upgrades||{});
 S.contracts=S.contracts||[];S.rivalHistory=S.rivalHistory||[];S.longJobs=S.longJobs||[];S.sectorControl=S.sectorControl||{};S.sectorRep=S.sectorRep||{};S.inventory=Object.assign({zeroDays:0,spoofKeys:0,dataCaches:0},S.inventory||{});S.worldEvents=S.worldEvents||[];S.intel=S.intel||0;S.fragments=S.fragments||0;S.seasonScore=S.seasonScore||0;S.networkRank=S.networkRank||1;S.shield=S.shield??100;
-let pois=[],watchId=null,selected=null,simTick=0,devices=[],realMap=null,playerMarker=null,poiMarkers=[],rivals=[],sectorLayers=[],mapReady=false;
+let pois=[],watchId=null,selected=null,simTick=0,devices=[],realMap=null,playerMarker=null,poiMarkers=[],rivals=[],sectorLayers=[],mapReady=false,poiMarkerById=new Map(),sectorSignature="";
 const save=()=>localStorage.setItem("shadowgrid",JSON.stringify(S));
 function toast(t){let e=$("#toast");e.textContent=t;e.classList.add("show");clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove("show"),1800)}
 function rnd(a,b){return Math.floor(Math.random()*(b-a+1))+a}
@@ -439,8 +439,8 @@ function initRealMap(){
    renderPOIs();
  });
 
- realMap.on("moveend",()=>{if(mapReady){renderSectors();renderPOIs()}});
- realMap.on("zoomend",()=>{if(mapReady){renderSectors();renderPOIs()}});
+ realMap.on("moveend",()=>{if(mapReady){refreshVisibleMapContent()}});
+ realMap.on("zoomend",()=>{if(mapReady){refreshVisibleMapContent()}});
 }
 function syncZoomFromMap(){}
 function syncMapPosition(){
@@ -450,7 +450,7 @@ function syncMapPosition(){
 function seedPOIs(){
  if(S.lat==null){S.lat=42.3265;S.lon=-122.8756}
  const key=S.lat.toFixed(3)+","+S.lon.toFixed(3), r=prng(hash(key)), names=Object.keys(TYPES);
- pois=[];
+ clearPoiMarkers();pois=[];
  for(let i=0;i<42;i++){
    const ang=r()*Math.PI*2, d=28+r()*520, dd=metersToDelta(d,ang), type=names[Math.floor(r()*names.length)];
    pois.push({id:"p"+hash(key+i),lat:S.lat+dd.lat,lon:S.lon+dd.lon,type,name:TYPES[type].name+" "+String.fromCharCode(65+(i%26)),real:false});
@@ -494,7 +494,7 @@ async function fetchRealPOIs(){
   }
 
   // Always retain enough nearby targets so the grid never appears to "vanish".
-  pois=deduped.slice(0,70);
+  pois=deduped.slice(0,70);clearPoiMarkers();
   if(pois.length<12) seedPOIs();
   renderPOIs();
 
@@ -534,12 +534,21 @@ function clusterVisiblePOIs(items){
    return {type:g.items.length>1?"cluster":"single",items:g.items,lng:ll.lng,lat:ll.lat};
  });
 }
+
+function refreshVisibleMapContent(){
+ renderSectors();
+ renderPOIs();
+}
+function clearPoiMarkers(){
+ for(const m of poiMarkerById.values()){try{m.remove()}catch(e){}}
+ poiMarkerById.clear();
+ poiMarkers=[];
+}
 function renderPOIs(){
  if(S.lat==null)return;
  initRealMap();
  if(!realMap||!mapReady)return;
 
- const previous=poiMarkers;poiMarkers=[];
  const z=realMap.getZoom();
  const range=110+S.upgrades.range*35+S.upgrades.antenna*25;
  const bounds=realMap.getBounds();
@@ -554,36 +563,78 @@ function renderPOIs(){
 
  const labels={school:"EDU",church:"COM",library:"DATA",hospital:"MED",police:"SEC",transit:"MOVE",utility:"GRID",camera:"CAM",tower:"LINK",bank:"FIN",parking:"PARK",civic:"CIV"};
  const groups=clusterVisiblePOIs(visible);
+ const wanted=new Set();
 
  for(const g of groups){
    if(g.type==="cluster"){
-     const node=document.createElement("div");
-     node.className="clusterNode";
-     node.textContent=g.items.length;
-     node.title=`${g.items.length} nearby nodes`;
-     node.addEventListener("click",e=>{
-       e.stopPropagation();
-       const b=new maplibregl.LngLatBounds();
-       g.items.forEach(o=>b.extend([o.p.lon,o.p.lat]));
-       realMap.fitBounds(b,{padding:90,maxZoom:17.4,duration:420});
-     });
-     poiMarkers.push(new maplibregl.Marker({element:node,anchor:"center"}).setLngLat([g.lng,g.lat]).addTo(realMap));
+     const ids=g.items.map(o=>o.p.id).sort().join("|");
+     const key="cluster:"+ids;
+     wanted.add(key);
+
+     let marker=poiMarkerById.get(key);
+     if(!marker){
+       const node=document.createElement("div");
+       node.className="clusterNode";
+       node.textContent=g.items.length;
+       node.title=`${g.items.length} nearby nodes`;
+       node.addEventListener("click",e=>{
+         e.stopPropagation();
+         const b=new maplibregl.LngLatBounds();
+         g.items.forEach(o=>b.extend([o.p.lon,o.p.lat]));
+         realMap.fitBounds(b,{padding:90,maxZoom:17.4,duration:420});
+       });
+       marker=new maplibregl.Marker({element:node,anchor:"center"})
+         .setLngLat([g.lng,g.lat]).addTo(realMap);
+       poiMarkerById.set(key,marker);
+     }else{
+       marker.setLngLat([g.lng,g.lat]);
+       const el=marker.getElement();
+       if(el)el.textContent=g.items.length;
+     }
      continue;
    }
 
    const o=g.items[0],p=o.p,d=o.d,t=TYPES[p.type];
+   const key="poi:"+p.id;
+   wanted.add(key);
    const available=d<=range,done=!!S.completed[p.id];
    const longEligible=["bank","police","utility","tower","hospital"].includes(p.type);
 
-   const node=document.createElement("div");
-   node.className=`hackNode ${(done?"done ":available?"available ":"locked ")+(longEligible?"long":"")}`;
-   node.innerHTML=`<div class="hex"></div><div class="core">${labels[p.type]||"NODE"}</div>
-     <div class="nodeDist">${d}m</div>${z>=16.4?`<div class="nodeType">${t.name}</div>`:""}`;
-   node.addEventListener("click",e=>{e.stopPropagation();openPOI(p,d)});
-   poiMarkers.push(new maplibregl.Marker({element:node,anchor:"center"}).setLngLat([p.lon,p.lat]).addTo(realMap));
+   let marker=poiMarkerById.get(key);
+   if(!marker){
+     const node=document.createElement("div");
+     node.className=`hackNode ${(done?"done ":available?"available ":"locked ")+(longEligible?"long":"")}`;
+     node.innerHTML=`<div class="hex"></div><div class="core">${labels[p.type]||"NODE"}</div>
+       <div class="nodeDist">${d}m</div>${z>=16.4?`<div class="nodeType">${t.name}</div>`:""}`;
+     node.addEventListener("click",e=>{e.stopPropagation();openPOI(p,Math.round(distanceM(S.lat,S.lon,p.lat,p.lon)))});
+     marker=new maplibregl.Marker({element:node,anchor:"center"})
+       .setLngLat([p.lon,p.lat]).addTo(realMap);
+     poiMarkerById.set(key,marker);
+   }else{
+     // Keep the marker tied to the actual geographic coordinate.
+     marker.setLngLat([p.lon,p.lat]);
+     const node=marker.getElement();
+     node.className=`hackNode ${(done?"done ":available?"available ":"locked ")+(longEligible?"long":"")}`;
+     const dist=node.querySelector(".nodeDist");
+     if(dist)dist.textContent=d+"m";
+     const label=node.querySelector(".nodeType");
+     if(z>=16.4){
+       if(!label){
+         const l=document.createElement("div");
+         l.className="nodeType";l.textContent=t.name;node.appendChild(l);
+       }
+     }else if(label){label.remove()}
+   }
  }
 
- previous.forEach(m=>{try{m.remove()}catch(e){}});
+ // Remove only markers that are no longer part of the current visible/clustered set.
+ for(const [key,marker] of [...poiMarkerById.entries()]){
+   if(!wanted.has(key)){
+     try{marker.remove()}catch(e){}
+     poiMarkerById.delete(key);
+   }
+ }
+ poiMarkers=[...poiMarkerById.values()];
  syncMapPosition();
 }
 function openPOI(p,d){
@@ -875,6 +926,13 @@ function sectorInfo(lat,lon){
 function renderSectors(){
  if(!realMap||!mapReady||S.lat==null)return;
 
+ const c=sectorInfo(S.lat,S.lon),step=c.step,z=realMap.getZoom();
+ const radius=z<14.2?0:1;
+ const bucket=z<14.2?"far":z<16.4?"mid":"near";
+ const sig=`${c.x}:${c.y}:${bucket}:${radius}:${JSON.stringify(S.sectorControl)}`;
+ if(sig===sectorSignature)return;
+ sectorSignature=sig;
+
  for(const item of sectorLayers){
    try{
      if(item.type==="marker") item.obj.remove();
@@ -887,11 +945,8 @@ function renderSectors(){
  }
  sectorLayers=[];
 
- const c=sectorInfo(S.lat,S.lon),step=c.step,z=realMap.getZoom();
- const radius=z<14.2?0:1;
-
  for(let dy=-radius;dy<=radius;dy++)for(let dx=-radius;dx<=radius;dx++){
-   const x=c.x+dx,y=c.y+dy,key=y+":"+x;
+   const x=c.x+dx,y=c.y+dy;
    const info=sectorInfo((y+.5)*step,(x+.5)*step);
    const isCurrent=dx===0&&dy===0,isPlayer=info.owner==="YOU";
    const color=isPlayer?"#4ff7e8":info.owner==="UNCLAIMED"?"#2a494d":"#5c4c2b";
@@ -1187,7 +1242,7 @@ window.addEventListener("resize",()=>{realMap?.resize();renderPOIs()});updateHUD
 if(!localStorage.getItem("shadowgrid_v13_seen")){setTimeout(()=>toast("Tap ⌁ to scan // ▦ for your sector // clusters expand when tapped"),1200);localStorage.setItem("shadowgrid_v13_seen","1")}
 startGPS();
 if("serviceWorker" in navigator){
-  window.addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js?v=13").catch(()=>{}));
+  window.addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js?v=14").catch(()=>{}));
 }
 })();
 </script>

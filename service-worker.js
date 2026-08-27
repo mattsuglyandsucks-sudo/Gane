@@ -1,4 +1,4 @@
-const CACHE="shadow-grid-v13";
+const CACHE="shadow-grid-v14";
 const CORE=["./","./index.html","./manifest.json","./icon-192.png","./icon-512.png"];
 
 self.addEventListener("install",event=>{
