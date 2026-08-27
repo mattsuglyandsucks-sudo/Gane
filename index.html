@@ -166,20 +166,6 @@ font-size:9px;font-weight:900;color:#eaffff;background:#061019;border:1px solid 
 .sectorFloating{font:900 10px/1 system-ui;color:#67f7e7;letter-spacing:1px;text-shadow:0 0 8px #000;background:#031015cc;border:1px solid #1c615d;border-radius:4px;padding:4px 6px;white-space:nowrap}
 
 
-/* v12 marker collision/layout fix */
-.mapNodeWrap{width:58px;height:58px;position:relative;overflow:visible;pointer-events:auto}
-.hackNode{width:58px!important;height:58px!important;position:absolute!important;left:0;top:0;display:grid;place-items:center;overflow:visible!important}
-.hackNode .nodeType,.hackNode .nodeDist{pointer-events:none}
-.hackNode .nodeType{top:60px!important;left:29px!important;transform:translateX(-50%)!important}
-.hackNode .nodeDist{top:-8px!important;right:-6px!important}
-.maplibregl-marker{width:58px!important;height:58px!important;overflow:visible!important}
-
-
-.compactNode .nodeType{display:none!important}
-.compactNode .nodeDist{display:none!important}
-.compactNode .hackNode{transform:scale(.72);transform-origin:center}
-
-
 /* v12 clustering */
 .clusterNode{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;
 background:#06151b;border:2px solid #39f5ff;color:#eaffff;font:900 12px/1 system-ui;
@@ -187,6 +173,106 @@ box-shadow:0 0 0 6px rgba(57,245,255,.12),0 0 18px rgba(57,245,255,.5)}
 .clusterNode:after{content:"NODES";position:absolute;top:44px;left:50%;transform:translateX(-50%);
 font-size:7px;letter-spacing:.6px;color:#8ceee4;background:#031015e8;border:1px solid #1b4a49;
 border-radius:3px;padding:2px 4px;white-space:nowrap}
+
+
+/* v13 polished app redesign */
+:root{
+  --bg:#03070a;--panel:#071015;--panel2:#0a151b;--line:#17313a;--cyan:#4ff7e8;
+  --green:#71ffa8;--yellow:#ffd96a;--red:#ff5a72;--text:#e6fbfa;--muted:#7e9ea1;
+  --glass:rgba(4,10,14,.86)
+}
+body{background:#020609}
+#app{background:#020609}
+.topbar{
+  height:54px;padding:7px 10px 7px 12px;border-bottom:1px solid rgba(79,247,232,.12);
+  background:linear-gradient(180deg,rgba(3,9,12,.98),rgba(3,9,12,.90));
+  backdrop-filter:blur(16px)
+}
+.logo{font-size:12px;letter-spacing:1.7px}
+.status{gap:5px}
+.chip{
+  padding:5px 7px;border-radius:999px;border:1px solid rgba(79,247,232,.16);
+  background:rgba(8,22,27,.82);font-size:9px;color:#b9d9d8
+}
+.main{background:#020609}
+.coords{
+  top:10px;left:10px;padding:5px 8px;border-radius:999px;border:1px solid rgba(79,247,232,.16);
+  background:rgba(3,12,16,.78);backdrop-filter:blur(10px);font-size:9px;color:#9bc3c1
+}
+.mapBtns{right:10px;top:10px;gap:6px}
+.iconBtn{
+  width:40px;height:40px;border-radius:12px;border:1px solid rgba(79,247,232,.18);
+  background:rgba(4,14,18,.84);backdrop-filter:blur(12px);box-shadow:0 8px 24px rgba(0,0,0,.25);
+  color:#7cf6ea;font-size:17px
+}
+.zoomCtl{gap:4px}.zoomCtl .iconBtn{height:34px}
+.bottom{
+  height:74px;padding:8px 8px calc(8px + var(--safe));gap:5px;border-top:1px solid rgba(79,247,232,.10);
+  background:rgba(2,8,11,.95);backdrop-filter:blur(18px)
+}
+.nav{
+  border:0;border-radius:12px;background:transparent;color:#617b7d;font-size:9px;font-weight:700;
+  letter-spacing:.35px
+}
+.nav .nicon{font-size:18px;margin-bottom:2px}
+.nav.active{color:#eaffff;background:linear-gradient(180deg,rgba(79,247,232,.13),rgba(79,247,232,.06));box-shadow:inset 0 0 0 1px rgba(79,247,232,.12)}
+.sheet{
+  height:min(82%,720px);max-height:82%;border-radius:24px 24px 0 0;border-top:1px solid rgba(79,247,232,.16);
+  background:linear-gradient(180deg,rgba(9,20,25,.99),rgba(4,11,15,.99));box-shadow:0 -18px 60px rgba(0,0,0,.62)
+}
+.handle{width:38px;height:4px;background:#2b4b50;margin:9px auto 5px}
+.sheetHead{padding:8px 15px 12px;border-bottom:1px solid rgba(79,247,232,.09)}
+.sheetHead h2{font-size:14px;letter-spacing:.4px}
+.sheetHead .close{font-size:24px}
+.sheetBody{padding:12px 12px calc(24px + var(--safe))}
+.card{
+  border:1px solid rgba(79,247,232,.10);background:linear-gradient(180deg,rgba(9,22,27,.94),rgba(6,15,19,.94));
+  border-radius:14px;padding:12px;margin-bottom:9px;box-shadow:0 7px 20px rgba(0,0,0,.13)
+}
+.card h3{font-size:14px;margin-bottom:6px}
+.btn{
+  border-radius:11px;border:1px solid rgba(79,247,232,.20);
+  background:linear-gradient(180deg,#0b2830,#092027);padding:11px 10px;font-size:11px;letter-spacing:.45px
+}
+.btn:active{transform:scale(.985);background:#0d3039}
+.stat{border-radius:11px;background:#07151a;border:1px solid rgba(79,247,232,.08)}
+.stat b{font-size:16px}
+.bar{height:6px;background:#0c2026}
+.routeChoice{border-radius:12px;padding:11px;border:1px solid rgba(79,247,232,.10);background:#07151a}
+.actionGrid{gap:8px}
+.techNode{border-radius:12px;background:#07151a;border-color:rgba(79,247,232,.10)}
+
+/* map hierarchy */
+#leafletMap{background:#020609}
+#leafletMap .maplibregl-canvas{filter:saturate(.82) contrast(1.04)}
+.playerPin{width:18px;height:18px;border:3px solid #eaffff;box-shadow:0 0 0 7px rgba(79,247,232,.18),0 0 24px #4ff7e8}
+.playerPin:after{display:none}
+.hackNode{width:42px;height:42px;filter:drop-shadow(0 4px 10px rgba(0,0,0,.55))}
+.hackNode .hex{inset:2px;border-width:1.5px;background:rgba(4,15,19,.95)}
+.hackNode .core{
+  width:24px;height:24px;border-radius:7px;background:#0a2228;border-color:#2a6e69;
+  font-size:8px;letter-spacing:.3px
+}
+.hackNode .nodeDist{
+  top:-7px;right:-7px;font-size:7px;border-radius:999px;padding:2px 4px;
+  background:#041015;border-color:#245a56
+}
+.hackNode .nodeType{
+  top:44px;font-size:7px;padding:2px 4px;border-radius:999px;background:rgba(3,11,14,.92);
+  border-color:rgba(79,247,232,.10);max-width:94px;overflow:hidden;text-overflow:ellipsis
+}
+.hackNode.long .hex{animation:none;border-color:#d9bd5f}
+.clusterNode{
+  width:36px;height:36px;border-radius:12px;background:rgba(5,18,22,.96);
+  border:1px solid #4ff7e8;box-shadow:0 0 0 4px rgba(79,247,232,.08),0 6px 18px rgba(0,0,0,.38);
+  font-size:11px
+}
+.clusterNode:after{display:none}
+.sectorFloating{
+  font-size:8px;padding:3px 5px;border-radius:999px;opacity:.78;background:rgba(3,12,15,.76);
+  border-color:rgba(79,247,232,.12);pointer-events:none
+}
+.maplibregl-marker{will-change:transform}
 
 </style>
 </head>
@@ -213,7 +299,7 @@ border-radius:3px;padding:2px 4px;white-space:nowrap}
       <div class="coords" id="coords">GPS: starting…</div>
       <div class="mapBtns">
   <button class="iconBtn" id="locateBtn" aria-label="Refresh GPS">◎</button>
-  <button class="iconBtn" id="scanBtn" aria-label="Profiler scan">⌁</button><button class="iconBtn" id="sectorBtn" aria-label="Grid sector">▦</button>
+  <button class="iconBtn" id="scanBtn" aria-label="Profiler scan">⌁</button><button class="iconBtn" id="sectorBtn" aria-label="Grid sector">▦</button><button class="iconBtn" id="mapInfoBtn" aria-label="Map legend">?</button>
   <div class="zoomCtl"><button class="iconBtn" id="zoomIn" aria-label="Zoom in">＋</button><button class="iconBtn" id="zoomOut" aria-label="Zoom out">−</button></div>
 </div>
     </div>
@@ -424,34 +510,28 @@ async function fetchRealPOIs(){
 function clusterVisiblePOIs(items){
  if(!realMap)return items.map(o=>({type:"single",items:[o],lng:o.p.lon,lat:o.p.lat}));
  const z=realMap.getZoom();
- if(z>=16.2)return items.map(o=>({type:"single",items:[o],lng:o.p.lon,lat:o.p.lat}));
 
- // Pixel-based clustering so overlap behaves correctly at every zoom.
- const radius=z<13.5?70:z<14.5?58:z<15.5?48:38;
+ // At normal street zoom, keep individual nodes but still prevent collisions.
+ const radius=z<13?90:z<14?74:z<15?60:z<16?46:z<17?34:24;
  const groups=[];
  for(const o of items){
    const pt=realMap.project([o.p.lon,o.p.lat]);
-   let best=null;
+   let best=null,bestD=Infinity;
    for(const g of groups){
-     const dx=pt.x-g.px,dy=pt.y-g.py;
-     if(dx*dx+dy*dy<=radius*radius){best=g;break}
+     const dx=pt.x-g.px,dy=pt.y-g.py,d2=dx*dx+dy*dy;
+     if(d2<=radius*radius && d2<bestD){best=g;bestD=d2}
    }
    if(best){
      best.items.push(o);
-     const n=best.items.length;
-     best.px=(best.px*(n-1)+pt.x)/n;
-     best.py=(best.py*(n-1)+pt.y)/n;
+     // Keep cluster position anchored to the closest/most important point instead of averaging downward.
+     if(o.d<best.anchorD){best.px=pt.x;best.py=pt.y;best.anchorD=o.d}
    }else{
-     groups.push({items:[o],px:pt.x,py:pt.y});
+     groups.push({items:[o],px:pt.x,py:pt.y,anchorD:o.d});
    }
  }
  return groups.map(g=>{
    const ll=realMap.unproject([g.px,g.py]);
-   return {
-     type:g.items.length>1?"cluster":"single",
-     items:g.items,
-     lng:ll.lng,lat:ll.lat
-   };
+   return {type:g.items.length>1?"cluster":"single",items:g.items,lng:ll.lng,lat:ll.lat};
  });
 }
 function renderPOIs(){
@@ -460,13 +540,17 @@ function renderPOIs(){
  if(!realMap||!mapReady)return;
 
  const previous=poiMarkers;poiMarkers=[];
+ const z=realMap.getZoom();
  const range=110+S.upgrades.range*35+S.upgrades.antenna*25;
  const bounds=realMap.getBounds();
+ const limit=z<13.5?14:z<15?20:z<16.5?28:36;
 
- const visible=pois.map(p=>({p,d:Math.round(distanceM(S.lat,S.lon,p.lat,p.lon))}))
+ const priority={bank:6,police:6,utility:5,tower:5,hospital:4,school:3,library:3,transit:3,civic:2,church:2,parking:1,camera:1};
+ const visible=pois.map(p=>({p,d:Math.round(distanceM(S.lat,S.lon,p.lat,p.lon)),prio:(priority[p.type]||1)+(p.real?2:0)}))
    .filter(o=>bounds.contains([o.p.lon,o.p.lat]))
-   .sort((a,b)=>a.d-b.d)
-   .slice(0,36);
+   .sort((a,b)=>b.prio-a.prio||a.d-b.d)
+   .slice(0,limit)
+   .sort((a,b)=>a.d-b.d);
 
  const labels={school:"EDU",church:"COM",library:"DATA",hospital:"MED",police:"SEC",transit:"MOVE",utility:"GRID",camera:"CAM",tower:"LINK",bank:"FIN",parking:"PARK",civic:"CIV"};
  const groups=clusterVisiblePOIs(visible);
@@ -476,15 +560,14 @@ function renderPOIs(){
      const node=document.createElement("div");
      node.className="clusterNode";
      node.textContent=g.items.length;
+     node.title=`${g.items.length} nearby nodes`;
      node.addEventListener("click",e=>{
        e.stopPropagation();
-       const bounds=new maplibregl.LngLatBounds();
-       g.items.forEach(o=>bounds.extend([o.p.lon,o.p.lat]));
-       realMap.fitBounds(bounds,{padding:70,maxZoom:17.2,duration:450});
+       const b=new maplibregl.LngLatBounds();
+       g.items.forEach(o=>b.extend([o.p.lon,o.p.lat]));
+       realMap.fitBounds(b,{padding:90,maxZoom:17.4,duration:420});
      });
-     const marker=new maplibregl.Marker({element:node,anchor:"center"})
-       .setLngLat([g.lng,g.lat]).addTo(realMap);
-     poiMarkers.push(marker);
+     poiMarkers.push(new maplibregl.Marker({element:node,anchor:"center"}).setLngLat([g.lng,g.lat]).addTo(realMap));
      continue;
    }
 
@@ -492,17 +575,12 @@ function renderPOIs(){
    const available=d<=range,done=!!S.completed[p.id];
    const longEligible=["bank","police","utility","tower","hospital"].includes(p.type);
 
-   const wrap=document.createElement("div");
-   wrap.innerHTML=`<div class="hackNode ${(done?"done ":available?"available ":"locked ")+(longEligible?"long":"")}">
-     <div class="hex"></div><div class="core">${labels[p.type]||"NODE"}</div>
-     <div class="nodeDist">${d}m</div><div class="nodeType">${t.name}</div>
-   </div>`;
-   const node=wrap.firstElementChild;
+   const node=document.createElement("div");
+   node.className=`hackNode ${(done?"done ":available?"available ":"locked ")+(longEligible?"long":"")}`;
+   node.innerHTML=`<div class="hex"></div><div class="core">${labels[p.type]||"NODE"}</div>
+     <div class="nodeDist">${d}m</div>${z>=16.4?`<div class="nodeType">${t.name}</div>`:""}`;
    node.addEventListener("click",e=>{e.stopPropagation();openPOI(p,d)});
-
-   const marker=new maplibregl.Marker({element:node,anchor:"center"})
-     .setLngLat([p.lon,p.lat]).addTo(realMap);
-   poiMarkers.push(marker);
+   poiMarkers.push(new maplibregl.Marker({element:node,anchor:"center"}).setLngLat([p.lon,p.lat]).addTo(realMap));
  }
 
  previous.forEach(m=>{try{m.remove()}catch(e){}});
@@ -809,28 +887,29 @@ function renderSectors(){
  }
  sectorLayers=[];
 
- const c=sectorInfo(S.lat,S.lon),step=c.step;
- for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
+ const c=sectorInfo(S.lat,S.lon),step=c.step,z=realMap.getZoom();
+ const radius=z<14.2?0:1;
+
+ for(let dy=-radius;dy<=radius;dy++)for(let dx=-radius;dx<=radius;dx++){
    const x=c.x+dx,y=c.y+dy,key=y+":"+x;
    const info=sectorInfo((y+.5)*step,(x+.5)*step);
-   const isPlayer=info.owner==="YOU";
-   const color=isPlayer?"#39f5ff":info.owner==="UNCLAIMED"?"#365f62":"#7a6030";
-   const source="sector-"+x+"-"+y;
-   const fill=source+"-fill",line=source+"-line";
-   const coords=[[
-     [x*step,y*step],[(x+1)*step,y*step],[(x+1)*step,(y+1)*step],[x*step,(y+1)*step],[x*step,y*step]
-   ]];
+   const isCurrent=dx===0&&dy===0,isPlayer=info.owner==="YOU";
+   const color=isPlayer?"#4ff7e8":info.owner==="UNCLAIMED"?"#2a494d":"#5c4c2b";
+   const source="sector-"+x+"-"+y,fill=source+"-fill",line=source+"-line";
+   const coords=[[[x*step,y*step],[(x+1)*step,y*step],[(x+1)*step,(y+1)*step],[x*step,(y+1)*step],[x*step,y*step]]];
+
    realMap.addSource(source,{type:"geojson",data:{type:"Feature",properties:{},geometry:{type:"Polygon",coordinates:coords}}});
-   realMap.addLayer({id:fill,type:"fill",source,paint:{"fill-color":color,"fill-opacity":isPlayer?.07:.025}});
-   realMap.addLayer({id:line,type:"line",source,paint:{"line-color":color,"line-width":isPlayer?2:1,"line-opacity":.55}});
+   realMap.addLayer({id:fill,type:"fill",source,paint:{"fill-color":color,"fill-opacity":isCurrent?.055:.015}});
+   realMap.addLayer({id:line,type:"line",source,paint:{"line-color":color,"line-width":isCurrent?1.8:.8,"line-opacity":isCurrent?.55:.22}});
    sectorLayers.push({type:"source",source,fill,line});
 
-   const el=document.createElement("div");
-   el.className="sectorFloating";
-   el.textContent=isPlayer?"YOUR GRID":info.owner==="UNCLAIMED"?"OPEN SECTOR":info.owner;
-   const marker=new maplibregl.Marker({element:el,anchor:"center"})
-     .setLngLat([(x+.5)*step,(y+.5)*step]).addTo(realMap);
-   sectorLayers.push({type:"marker",obj:marker});
+   if(isCurrent || z>=16.4){
+     const el=document.createElement("div");
+     el.className="sectorFloating";
+     el.textContent=isCurrent?(isPlayer?"YOUR SECTOR":info.owner==="UNCLAIMED"?"CURRENT SECTOR":info.owner):info.owner;
+     const marker=new maplibregl.Marker({element:el,anchor:"center"}).setLngLat([(x+.5)*step,(y+.5)*step]).addTo(realMap);
+     sectorLayers.push({type:"marker",obj:marker});
+   }
  }
 }
 function currentSector(){
@@ -1098,12 +1177,17 @@ function startGPS(){
 }
 $("#locateBtn").onclick=()=>{startGPS();initRealMap();if(realMap&&S.lat!=null){realMap.easeTo({center:[S.lon,S.lat],zoom:Math.max(realMap.getZoom(),16.8),duration:550})}renderPOIs();toast("Recentered on GPS")};
 $("#scanBtn").onclick=profilerScan;$("#sectorBtn").onclick=sectorView;
+$("#mapInfoBtn").onclick=()=>openSheet("MAP LEGEND",`<div class="card"><b>GRID MAP</b><div class="muted">The map intentionally hides low-priority labels while zoomed out to stay readable.</div></div>
+<div class="statgrid"><div class="stat"><span class="muted">CYAN</span><b>ACTIVE</b></div><div class="stat"><span class="muted">GOLD</span><b>DEEP</b></div><div class="stat"><span class="muted">GREEN</span><b>CLEARED</b></div><div class="stat"><span class="muted">NUMBER</span><b>CLUSTER</b></div></div>
+<div class="card"><div class="muted">Tap a numbered cluster to zoom into it. Sector labels only appear for the current area until you zoom closer.</div></div>`);
 $("#zoomIn").onclick=()=>{initRealMap();realMap?.zoomIn({duration:220});toast("Map zoom +")};
 $("#zoomOut").onclick=()=>{initRealMap();realMap?.zoomOut({duration:220});toast("Map zoom −")};
 setInterval(()=>{simTick++;if(S.heat>0){S.heat=Math.max(0,S.heat-.35);if(simTick%5===0){save();updateHUD()}}if(simTick%15===0)maybeIncomingAttack();if(simTick%10===0&&S.upgrades.battery>0&&S.shield<100){S.shield=Math.min(100,S.shield+S.upgrades.battery*.15);save();}},1000);
-window.addEventListener("resize",()=>{realMap?.resize();renderPOIs()});updateHUD();ensureMissions();ensureContracts();startGPS();
+window.addEventListener("resize",()=>{realMap?.resize();renderPOIs()});updateHUD();ensureMissions();ensureContracts();
+if(!localStorage.getItem("shadowgrid_v13_seen")){setTimeout(()=>toast("Tap ⌁ to scan // ▦ for your sector // clusters expand when tapped"),1200);localStorage.setItem("shadowgrid_v13_seen","1")}
+startGPS();
 if("serviceWorker" in navigator){
-  window.addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js?v=12").catch(()=>{}));
+  window.addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js?v=13").catch(()=>{}));
 }
 })();
 </script>
