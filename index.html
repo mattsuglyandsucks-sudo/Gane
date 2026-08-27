@@ -128,7 +128,14 @@ const save=()=>localStorage.setItem("shadowgrid",JSON.stringify(S));
 function toast(t){let e=$("#toast");e.textContent=t;e.classList.add("show");clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove("show"),1800)}
 function rnd(a,b){return Math.floor(Math.random()*(b-a+1))+a}
 function hash(str){let h=2166136261;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
-function prng(seed){return ()=>((seed=Math.imul(seed^seed>>>15,1|seed))^=seed+Math.imul(seed^seed>>>7,61|seed),((seed^seed>>>14)>>>0)/4294967296)}
+function prng(seed){
+ return ()=>{
+   seed |= 0;
+   seed = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+   seed ^= seed + Math.imul(seed ^ (seed >>> 7), 61 | seed);
+   return ((seed ^ (seed >>> 14)) >>> 0) / 4294967296;
+ };
+}
 function levelReq(l){return 100+Math.floor(l*l*42)}
 function updateHUD(){
  $("#cashChip").textContent="$"+S.cash.toLocaleString();$("#levelChip").textContent="LV "+S.level;
@@ -320,7 +327,7 @@ $("#scanBtn").onclick=()=>{let fx=$("#scanFx");fx.classList.remove("go");void fx
 setInterval(()=>{simTick++;if(S.heat>0){S.heat=Math.max(0,S.heat-.35);if(simTick%5===0){save();updateHUD()}}},1000);
 window.addEventListener("resize",renderPOIs);updateHUD();ensureMissions();startGPS();
 if("serviceWorker" in navigator){
-  window.addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js").catch(()=>{}));
+  window.addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js?v=3").catch(()=>{}));
 }
 })();
 </script>
