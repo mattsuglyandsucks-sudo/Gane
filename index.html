@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="Shadow Grid" />
 <title>ctOS: Shadow Grid</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet"/>
 <style>
 :root{
   --bg:#05080d;--panel:#0a111a;--panel2:#0d1723;--line:#1d3446;--cyan:#39f5ff;
@@ -31,10 +31,10 @@ linear-gradient(#05080d,#060b11)}
 .main{position:relative;flex:1;min-height:0;overflow:hidden}
 #map{position:absolute;inset:0;overflow:hidden;background:#071018}
 #leafletMap{position:absolute;inset:0;z-index:0;touch-action:none}
-#leafletMap .leaflet-tile-pane{filter:brightness(.88) contrast(1.16) saturate(.65) hue-rotate(122deg)}
-#leafletMap .leaflet-control-attribution{font-size:8px;background:rgba(3,8,13,.72)!important;color:#7195a2!important}
-#leafletMap .leaflet-control-attribution a{color:#68dfe9!important}
-#leafletMap .leaflet-control-zoom{display:none}
+
+
+
+
 .mapTint{display:none}
 .mapNoise{display:none}
 .grid{display:none;position:absolute;inset:-100px;background-image:
@@ -92,7 +92,7 @@ box-shadow:0 0 0 4px rgba(57,245,255,.11),0 0 18px rgba(57,245,255,.5);font-size
 .ctosPoi .poiDist{position:absolute;top:48px;left:50%;transform:translateX(-50%);font-size:9px;background:#051019e8;
 border:1px solid #193847;border-radius:3px;padding:2px 4px;color:#c7e9ef;white-space:nowrap}
 
-.leaflet-container{background:#010508!important}
+
 #leafletMap:after{
   content:"";position:absolute;inset:0;pointer-events:none;z-index:400;
   background:
@@ -104,7 +104,7 @@ border:1px solid #193847;border-radius:3px;padding:2px 4px;color:#c7e9ef;white-s
 box-shadow:0 0 0 4px rgba(53,246,223,.10),0 0 18px rgba(53,246,223,.55)!important}
 .playerPin{background:#35f6df!important;box-shadow:0 0 0 8px rgba(53,246,223,.22),0 0 30px #35f6df!important}
 
-#leafletMap .leaflet-tile{opacity:.96}
+
 #leafletMap .leaflet-pane{mix-blend-mode:normal}
 
 /* v9 gameplay systems */
@@ -126,7 +126,7 @@ box-shadow:0 0 0 4px rgba(53,246,223,.10),0 0 18px rgba(53,246,223,.55)!importan
 
 
 /* v10 world / nodes */
-#leafletMap .leaflet-tile{opacity:1!important}
+
 .sectorLabel{font:900 10px/1 system-ui;color:#67f7e7;letter-spacing:1px;text-shadow:0 0 8px #000;background:#031015cc;border:1px solid #1c615d;border-radius:4px;padding:4px 6px}
 .hackNode{width:58px;height:58px;position:relative;display:grid;place-items:center;filter:drop-shadow(0 0 8px rgba(64,255,232,.3))}
 .hackNode .hex{position:absolute;inset:3px;background:#06131a;border:2px solid #3ef5df;clip-path:polygon(25% 6%,75% 6%,100% 50%,75% 94%,25% 94%,0 50%);box-shadow:inset 0 0 12px rgba(62,245,223,.08)}
@@ -146,6 +146,24 @@ box-shadow:0 0 0 4px rgba(53,246,223,.10),0 0 18px rgba(53,246,223,.55)!importan
 .techNode b{display:block}.techNode .lvl{font-size:18px;color:#39f5ff}
 .actionGrid{display:grid;grid-template-columns:1fr 1fr;gap:7px}.actionGrid .btn{margin-top:0}
 .worldEvent{border-left:3px solid #ffd65c;background:#141205}
+
+
+#leafletMap{position:absolute;inset:0;z-index:0;background:#020609;touch-action:none}
+#leafletMap .maplibregl-canvas{outline:none}
+#leafletMap .maplibregl-ctrl-attrib{font-size:8px;background:rgba(3,8,13,.76)!important;color:#6e9aa0!important}
+#leafletMap .maplibregl-ctrl-attrib a{color:#55dccc!important}
+#leafletMap .maplibregl-ctrl-logo{opacity:.55}
+.maplibregl-marker{z-index:5}
+.playerPin{width:24px;height:24px;border-radius:50%;background:#35f6df;border:4px solid #efffff;
+box-shadow:0 0 0 8px rgba(53,246,223,.22),0 0 30px #35f6df;position:relative}
+.playerPin:after{content:"YOU";position:absolute;top:28px;left:50%;transform:translateX(-50%);
+font-size:9px;font-weight:900;color:#eaffff;background:#061019;border:1px solid #39f5ff;border-radius:3px;padding:2px 4px;white-space:nowrap}
+.hackNode{width:58px;height:58px;position:relative;display:grid;place-items:center;filter:drop-shadow(0 0 8px rgba(64,255,232,.3))}
+.hackNode .hex{position:absolute;inset:3px;background:#06131a;border:2px solid #3ef5df;clip-path:polygon(25% 6%,75% 6%,100% 50%,75% 94%,25% 94%,0 50%)}
+.hackNode .core{z-index:2;width:28px;height:28px;border:1px solid #277a73;border-radius:6px;display:grid;place-items:center;background:#09202a;font-size:10px;font-weight:900;color:#d9fffb;letter-spacing:.4px}
+.hackNode .nodeType{position:absolute;z-index:3;top:58px;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:8px;font-weight:800;letter-spacing:.5px;color:#d8ffff;background:#031015ef;border:1px solid #1c4948;border-radius:3px;padding:2px 4px}
+.hackNode .nodeDist{position:absolute;z-index:3;top:-8px;right:-4px;font-size:8px;background:#031015;border:1px solid #255d5a;border-radius:8px;padding:2px 4px;color:#70e8dc}
+.sectorFloating{font:900 10px/1 system-ui;color:#67f7e7;letter-spacing:1px;text-shadow:0 0 8px #000;background:#031015cc;border:1px solid #1c615d;border-radius:4px;padding:4px 6px;white-space:nowrap}
 
 </style>
 </head>
@@ -187,7 +205,7 @@ box-shadow:0 0 0 4px rgba(53,246,223,.10),0 0 18px rgba(53,246,223,.55)!importan
     <button class="nav" data-tab="settings"><span class="nicon">⚙</span>SETTINGS</button>
   </div>
 </div>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script>
 (()=>{
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
@@ -212,7 +230,7 @@ const initial={cash:0,xp:0,level:1,heat:0,hacks:0,rep:0,skill:0,lat:null,lon:nul
 let S=Object.assign({},initial,JSON.parse(localStorage.getItem("shadowgrid")||"{}"));
 S.upgrades=Object.assign({},initial.upgrades,S.upgrades||{});
 S.contracts=S.contracts||[];S.rivalHistory=S.rivalHistory||[];S.longJobs=S.longJobs||[];S.sectorControl=S.sectorControl||{};S.sectorRep=S.sectorRep||{};S.inventory=Object.assign({zeroDays:0,spoofKeys:0,dataCaches:0},S.inventory||{});S.worldEvents=S.worldEvents||[];S.intel=S.intel||0;S.fragments=S.fragments||0;S.seasonScore=S.seasonScore||0;S.networkRank=S.networkRank||1;S.shield=S.shield??100;
-let pois=[],watchId=null,selected=null,simTick=0,devices=[],realMap=null,playerMarker=null,poiMarkers=[],rivals=[],sectorLayers=[];
+let pois=[],watchId=null,selected=null,simTick=0,devices=[],realMap=null,playerMarker=null,poiMarkers=[],rivals=[],sectorLayers=[],mapReady=false;
 const save=()=>localStorage.setItem("shadowgrid",JSON.stringify(S));
 function toast(t){let e=$("#toast");e.textContent=t;e.classList.add("show");clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove("show"),1800)}
 function rnd(a,b){return Math.floor(Math.random()*(b-a+1))+a}
@@ -236,62 +254,89 @@ function distanceM(lat1,lon1,lat2,lon2){const R=6371e3,p1=lat1*Math.PI/180,p2=la
 function metersToDelta(m,angle){return {lat:(m*Math.cos(angle))/111320,lon:(m*Math.sin(angle))/(111320*Math.cos((S.lat||45)*Math.PI/180))}}
 
 function initRealMap(){
- if(realMap || typeof L==="undefined") return;
- realMap=L.map("leafletMap",{
-   zoomControl:false,
+ if(realMap || typeof maplibregl==="undefined") return;
+
+ realMap=new maplibregl.Map({
+   container:"leafletMap",
+   style:"https://tiles.openfreemap.org/styles/liberty",
+   center:[S.lon||-122.8756,S.lat||42.3265],
+   zoom:16.8,
+   pitch:0,
+   bearing:0,
    attributionControl:true,
-   preferCanvas:true,
-   touchZoom:true,
-   dragging:true,
-   doubleClickZoom:true,
-   scrollWheelZoom:true,
-   tap:true,
-   zoomSnap:0.5,
-   zoomDelta:0.5
- }).setView([S.lat||42.3265,S.lon||-122.8756],17);
-
- L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",{
-   maxZoom:19,
-   minZoom:3,
-   attribution:'&copy; OpenStreetMap &copy; CARTO',
-   crossOrigin:true,
-   updateWhenIdle:false,
-   keepBuffer:4
- }).addTo(realMap);
-
- const icon=L.divIcon({
-   className:"",
-   html:'<div class="playerPin"></div>',
-   iconSize:[24,24],
-   iconAnchor:[12,12]
+   dragRotate:false,
+   touchPitch:false
  });
- playerMarker=L.marker([S.lat||42.3265,S.lon||-122.8756],{
-   icon,
-   interactive:false,
-   zIndexOffset:10000
- }).addTo(realMap);
 
- const fixSize=()=>{
-   if(!realMap)return;
-   realMap.invalidateSize({pan:false,animate:false});
- };
- requestAnimationFrame(()=>requestAnimationFrame(fixSize));
- setTimeout(fixSize,250);
- setTimeout(fixSize,900);
+ realMap.addControl(new maplibregl.NavigationControl({showCompass:false}),"top-left");
 
- realMap.on("zoomend moveend",()=>{syncZoomFromMap();renderPOIs()});
+ realMap.on("load",()=>{
+   mapReady=true;
+
+   // ctOS visual pass: dark background, teal roads, subdued labels/buildings.
+   const style=realMap.getStyle();
+   for(const layer of style.layers||[]){
+     try{
+       const id=(layer.id||"").toLowerCase();
+       const type=layer.type;
+
+       if(type==="background"){
+         realMap.setPaintProperty(layer.id,"background-color","#020609");
+       }
+
+       if(type==="fill"){
+         if(id.includes("water")) realMap.setPaintProperty(layer.id,"fill-color","#031017");
+         else if(id.includes("building")) {
+           realMap.setPaintProperty(layer.id,"fill-color","#071216");
+           realMap.setPaintProperty(layer.id,"fill-opacity",0.88);
+         } else {
+           realMap.setPaintProperty(layer.id,"fill-color","#03080b");
+           if(realMap.getPaintProperty(layer.id,"fill-opacity")!==undefined) realMap.setPaintProperty(layer.id,"fill-opacity",0.92);
+         }
+       }
+
+       if(type==="line"){
+         if(id.includes("road")||id.includes("street")||id.includes("motorway")||id.includes("highway")||id.includes("transport")){
+           realMap.setPaintProperty(layer.id,"line-color", id.includes("motorway")||id.includes("primary") ? "#31d8c5" : "#1b8c83");
+           realMap.setPaintProperty(layer.id,"line-opacity", id.includes("motorway")||id.includes("primary") ? 0.95 : 0.72);
+         } else if(id.includes("boundary")){
+           realMap.setPaintProperty(layer.id,"line-color","#135d59");
+           realMap.setPaintProperty(layer.id,"line-opacity",0.32);
+         } else {
+           realMap.setPaintProperty(layer.id,"line-color","#0e3537");
+           realMap.setPaintProperty(layer.id,"line-opacity",0.38);
+         }
+       }
+
+       if(type==="symbol"){
+         if(realMap.getPaintProperty(layer.id,"text-color")!==undefined){
+           realMap.setPaintProperty(layer.id,"text-color","#6faaa7");
+           realMap.setPaintProperty(layer.id,"text-halo-color","#020609");
+           realMap.setPaintProperty(layer.id,"text-halo-width",1.2);
+         }
+         if(realMap.getPaintProperty(layer.id,"icon-opacity")!==undefined){
+           realMap.setPaintProperty(layer.id,"icon-opacity",0.55);
+         }
+       }
+     }catch(e){}
+   }
+
+   const el=document.createElement("div");
+   el.className="playerPin";
+   playerMarker=new maplibregl.Marker({element:el,anchor:"center"})
+     .setLngLat([S.lon||-122.8756,S.lat||42.3265]).addTo(realMap);
+
+   renderSectors();
+   renderPOIs();
+ });
+
+ realMap.on("moveend",()=>{if(mapReady){renderSectors();renderPOIs()}});
+ realMap.on("zoomend",()=>{if(mapReady){renderSectors();renderPOIs()}});
 }
-function syncZoomFromMap(){
- if(!realMap)return;
- const z=realMap.getZoom();
- S.mapZoom=Math.max(.75,Math.min(3,.75+(z-14)*.38));
-}
+function syncZoomFromMap(){}
 function syncMapPosition(){
- if(!realMap)return;
- playerMarker?.setLatLng([S.lat,S.lon]);
- const center=realMap.getCenter();
- const drift=distanceM(S.lat,S.lon,center.lat,center.lng);
- if(drift>180) realMap.panTo([S.lat,S.lon],{animate:true,duration:.5});
+ if(!realMap||!playerMarker||S.lat==null)return;
+ playerMarker.setLngLat([S.lon,S.lat]);
 }
 function seedPOIs(){
  if(S.lat==null){S.lat=42.3265;S.lon=-122.8756}
@@ -355,35 +400,37 @@ async function fetchRealPOIs(){
 function renderPOIs(){
  if(S.lat==null)return;
  initRealMap();
- if(!realMap)return;
- realMap.invalidateSize({pan:false});
- renderSectors();
+ if(!realMap||!mapReady)return;
 
  const previous=poiMarkers;poiMarkers=[];
  const range=110+S.upgrades.range*35+S.upgrades.antenna*25;
- const bounds=realMap.getBounds().pad(.35);
+ const bounds=realMap.getBounds();
+
  const visible=pois.map(p=>({p,d:Math.round(distanceM(S.lat,S.lon,p.lat,p.lon))}))
-   .filter(o=>bounds.contains([o.p.lat,o.p.lon]))
+   .filter(o=>bounds.contains([o.p.lon,o.p.lat]))
    .sort((a,b)=>a.d-b.d)
    .slice(0,24);
 
  const labels={school:"EDU",church:"COM",library:"DATA",hospital:"MED",police:"SEC",transit:"MOVE",utility:"GRID",camera:"CAM",tower:"LINK",bank:"FIN",parking:"PARK",civic:"CIV"};
+
  for(const o of visible){
    const {p,d}=o,t=TYPES[p.type],available=d<=range,done=!!S.completed[p.id];
    const longEligible=["bank","police","utility","tower","hospital"].includes(p.type);
-   const cls=(done?"done ":available?"available ":"locked ")+(longEligible?"long":"");
-   const icon=L.divIcon({
-     className:"",
-     html:`<div class="hackNode ${cls}">
-       <div class="hex"></div><div class="core">${labels[p.type]||"NODE"}</div>
-       <div class="nodeDist">${d}m</div><div class="nodeType">${t.name}</div>
-     </div>`,
-     iconSize:[58,58],iconAnchor:[29,29]
-   });
-   const marker=L.marker([p.lat,p.lon],{icon,zIndexOffset:1000}).addTo(realMap);
-   marker.on("click",()=>openPOI(p,d));poiMarkers.push(marker);
+
+   const el=document.createElement("div");
+   el.innerHTML=`<div class="hackNode ${(done?"done ":available?"available ":"locked ")+(longEligible?"long":"")}">
+     <div class="hex"></div><div class="core">${labels[p.type]||"NODE"}</div>
+     <div class="nodeDist">${d}m</div><div class="nodeType">${t.name}</div>
+   </div>`;
+   const node=el.firstElementChild;
+   node.addEventListener("click",e=>{e.stopPropagation();openPOI(p,d)});
+
+   const marker=new maplibregl.Marker({element:node,anchor:"center"})
+     .setLngLat([p.lon,p.lat]).addTo(realMap);
+   poiMarkers.push(marker);
  }
- previous.forEach(m=>realMap.removeLayer(m));
+
+ previous.forEach(m=>{try{m.remove()}catch(e){}});
  syncMapPosition();
 }
 function openPOI(p,d){
@@ -673,19 +720,42 @@ function sectorInfo(lat,lon){
  return {key,x,y,step,owner,rep};
 }
 function renderSectors(){
- if(!realMap||S.lat==null)return;
- sectorLayers.forEach(l=>realMap.removeLayer(l));sectorLayers=[];
- const c=sectorInfo(S.lat,S.lon), step=c.step;
+ if(!realMap||!mapReady||S.lat==null)return;
+
+ for(const item of sectorLayers){
+   try{
+     if(item.type==="marker") item.obj.remove();
+     if(item.type==="source"){
+       if(realMap.getLayer(item.fill)) realMap.removeLayer(item.fill);
+       if(realMap.getLayer(item.line)) realMap.removeLayer(item.line);
+       if(realMap.getSource(item.source)) realMap.removeSource(item.source);
+     }
+   }catch(e){}
+ }
+ sectorLayers=[];
+
+ const c=sectorInfo(S.lat,S.lon),step=c.step;
  for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
-  const x=c.x+dx,y=c.y+dy,key=y+":"+x,info=sectorInfo((y+.5)*step,(x+.5)*step);
-  const bounds=[[y*step,x*step],[(y+1)*step,(x+1)*step]];
-  const isPlayer=info.owner==="YOU";
-  const color=isPlayer?"#39f5ff":info.owner==="UNCLAIMED"?"#40626a":"#856e35";
-  const rect=L.rectangle(bounds,{color,weight:isPlayer?2:1,opacity:.55,fillColor:color,fillOpacity:isPlayer?.055:.018,interactive:false}).addTo(realMap);
-  sectorLayers.push(rect);
-  const center=[(y+.5)*step,(x+.5)*step];
-  const label=L.marker(center,{interactive:false,icon:L.divIcon({className:"",html:`<div class="sectorLabel">${isPlayer?"YOUR GRID":info.owner==="UNCLAIMED"?"OPEN SECTOR":info.owner}</div>`,iconSize:[100,16],iconAnchor:[50,8]})}).addTo(realMap);
-  sectorLayers.push(label);
+   const x=c.x+dx,y=c.y+dy,key=y+":"+x;
+   const info=sectorInfo((y+.5)*step,(x+.5)*step);
+   const isPlayer=info.owner==="YOU";
+   const color=isPlayer?"#39f5ff":info.owner==="UNCLAIMED"?"#365f62":"#7a6030";
+   const source="sector-"+x+"-"+y;
+   const fill=source+"-fill",line=source+"-line";
+   const coords=[[
+     [x*step,y*step],[(x+1)*step,y*step],[(x+1)*step,(y+1)*step],[x*step,(y+1)*step],[x*step,y*step]
+   ]];
+   realMap.addSource(source,{type:"geojson",data:{type:"Feature",properties:{},geometry:{type:"Polygon",coordinates:coords}}});
+   realMap.addLayer({id:fill,type:"fill",source,paint:{"fill-color":color,"fill-opacity":isPlayer?.07:.025}});
+   realMap.addLayer({id:line,type:"line",source,paint:{"line-color":color,"line-width":isPlayer?2:1,"line-opacity":.55}});
+   sectorLayers.push({type:"source",source,fill,line});
+
+   const el=document.createElement("div");
+   el.className="sectorFloating";
+   el.textContent=isPlayer?"YOUR GRID":info.owner==="UNCLAIMED"?"OPEN SECTOR":info.owner;
+   const marker=new maplibregl.Marker({element:el,anchor:"center"})
+     .setLngLat([(x+.5)*step,(y+.5)*step]).addTo(realMap);
+   sectorLayers.push({type:"marker",obj:marker});
  }
 }
 function currentSector(){
@@ -951,14 +1021,14 @@ function startGPS(){
    {enableHighAccuracy:true, maximumAge:10000, timeout:20000}
  );
 }
-$("#locateBtn").onclick=()=>{startGPS();initRealMap();if(realMap&&S.lat!=null){realMap.invalidateSize();realMap.setView([S.lat,S.lon],Math.max(realMap.getZoom(),16),{animate:true})}renderPOIs();toast("Recentered on GPS")};
+$("#locateBtn").onclick=()=>{startGPS();initRealMap();if(realMap&&S.lat!=null){realMap.easeTo({center:[S.lon,S.lat],zoom:Math.max(realMap.getZoom(),16.8),duration:550})}renderPOIs();toast("Recentered on GPS")};
 $("#scanBtn").onclick=profilerScan;$("#sectorBtn").onclick=sectorView;
-$("#zoomIn").onclick=()=>{initRealMap();realMap?.zoomIn();toast("Map zoom +")};
-$("#zoomOut").onclick=()=>{initRealMap();realMap?.zoomOut();toast("Map zoom −")};
+$("#zoomIn").onclick=()=>{initRealMap();realMap?.zoomIn({duration:220});toast("Map zoom +")};
+$("#zoomOut").onclick=()=>{initRealMap();realMap?.zoomOut({duration:220});toast("Map zoom −")};
 setInterval(()=>{simTick++;if(S.heat>0){S.heat=Math.max(0,S.heat-.35);if(simTick%5===0){save();updateHUD()}}if(simTick%15===0)maybeIncomingAttack();if(simTick%10===0&&S.upgrades.battery>0&&S.shield<100){S.shield=Math.min(100,S.shield+S.upgrades.battery*.15);save();}},1000);
-window.addEventListener("resize",()=>{realMap?.invalidateSize();renderPOIs()});updateHUD();ensureMissions();ensureContracts();startGPS();
+window.addEventListener("resize",()=>{realMap?.resize();renderPOIs()});updateHUD();ensureMissions();ensureContracts();startGPS();
 if("serviceWorker" in navigator){
-  window.addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js?v=10").catch(()=>{}));
+  window.addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js?v=11").catch(()=>{}));
 }
 })();
 </script>
