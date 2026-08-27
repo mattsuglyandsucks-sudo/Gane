@@ -10,8 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="Shadow Grid" />
 <title>ctOS: Shadow Grid</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
- integrity="sha256-p4NxAoJBhIINfQ3ynqlnMZ6Xg1T5Wz0tL0p1N6N5GfU=" crossorigin=""/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <style>
 :root{
   --bg:#05080d;--panel:#0a111a;--panel2:#0d1723;--line:#1d3446;--cyan:#39f5ff;
@@ -31,19 +30,13 @@ linear-gradient(#05080d,#060b11)}
 .chip.hot{color:#fff;border-color:#7e2432;background:#35121a}
 .main{position:relative;flex:1;min-height:0;overflow:hidden}
 #map{position:absolute;inset:0;overflow:hidden;background:#071018}
-#leafletMap{position:absolute;inset:0;z-index:0}
-#leafletMap .leaflet-tile-pane{filter:grayscale(1) brightness(.42) contrast(1.35) sepia(.2) hue-rotate(145deg) saturate(1.9)}
+#leafletMap{position:absolute;inset:0;z-index:0;touch-action:none}
+#leafletMap .leaflet-tile-pane{filter:invert(1) grayscale(1) sepia(1) saturate(5.5) hue-rotate(118deg) brightness(.34) contrast(2.05)}
 #leafletMap .leaflet-control-attribution{font-size:8px;background:rgba(3,8,13,.72)!important;color:#7195a2!important}
 #leafletMap .leaflet-control-attribution a{color:#68dfe9!important}
 #leafletMap .leaflet-control-zoom{display:none}
-.mapTint{position:absolute;inset:0;z-index:1;pointer-events:none;background:
-linear-gradient(rgba(12,40,52,.17),rgba(2,7,12,.30)),
-radial-gradient(circle at 50% 50%,transparent 0 40%,rgba(0,10,18,.28) 100%);
-mix-blend-mode:screen}
-.mapNoise{position:absolute;inset:0;z-index:2;pointer-events:none;opacity:.12;background-image:
-linear-gradient(rgba(57,245,255,.08) 1px,transparent 1px),
-linear-gradient(90deg,rgba(57,245,255,.08) 1px,transparent 1px);
-background-size:48px 48px}
+.mapTint{display:none}
+.mapNoise{display:none}
 .grid{display:none;position:absolute;inset:-100px;background-image:
 linear-gradient(rgba(57,245,255,.045) 1px,transparent 1px),
 linear-gradient(90deg,rgba(57,245,255,.045) 1px,transparent 1px);
@@ -85,6 +78,31 @@ background-size:42px 42px;transform:rotate(.001deg)}
 .small{font-size:10px}.divider{height:1px;background:#153042;margin:10px 0}
 .device{display:flex;align-items:center;gap:10px;cursor:pointer}.device .avatar{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;border:1px solid #2b5868;background:#0b1c27;font-size:19px;flex:0 0 auto}.device .dmain{flex:1;min-width:0}.device .dmain b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.tag{display:inline-block;font-size:9px;padding:3px 5px;border:1px solid #23485a;border-radius:4px;margin:4px 4px 0 0;color:#9ed7e2}.poi.dim{opacity:.28}.poi.focused{transform:scale(1.12);z-index:8}
 label.toggle{display:flex;align-items:center;justify-content:space-between;padding:9px 0}input[type=checkbox]{width:20px;height:20px;accent-color:#2bd6e4}
+
+#leafletMap{touch-action:none!important}
+.mapTint,.mapNoise{display:none!important}
+.playerPin{width:24px;height:24px;border-radius:50%;background:#39f5ff;border:4px solid #efffff;
+box-shadow:0 0 0 8px rgba(57,245,255,.22),0 0 30px #39f5ff;position:relative}
+.playerPin:after{content:"YOU";position:absolute;top:28px;left:50%;transform:translateX(-50%);
+font-size:9px;font-weight:900;color:#eaffff;background:#061019;border:1px solid #39f5ff;border-radius:3px;padding:2px 4px;white-space:nowrap}
+.ctosPoi{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:#07131d;border:2px solid #39f5ff;
+box-shadow:0 0 0 4px rgba(57,245,255,.11),0 0 18px rgba(57,245,255,.5);font-size:20px;color:#eaffff;position:relative}
+.ctosPoi.locked{border-color:#61737c;box-shadow:0 0 10px #0008;color:#8aa0aa;opacity:.72}
+.ctosPoi.done{border-color:#6bff9e;color:#6bff9e}
+.ctosPoi .poiDist{position:absolute;top:48px;left:50%;transform:translateX(-50%);font-size:9px;background:#051019e8;
+border:1px solid #193847;border-radius:3px;padding:2px 4px;color:#c7e9ef;white-space:nowrap}
+
+.leaflet-container{background:#010508!important}
+#leafletMap:after{
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:400;
+  background:
+    radial-gradient(circle at 50% 50%,rgba(0,255,220,.035),transparent 42%),
+    linear-gradient(rgba(0,0,0,.10),rgba(0,0,0,.28));
+  mix-blend-mode:screen
+}
+.ctosPoi{background:#031015!important;border-color:#35f6df!important;color:#eaffff!important;
+box-shadow:0 0 0 4px rgba(53,246,223,.10),0 0 18px rgba(53,246,223,.55)!important}
+.playerPin{background:#35f6df!important;box-shadow:0 0 0 8px rgba(53,246,223,.22),0 0 30px #35f6df!important}
 </style>
 </head>
 <body>
@@ -125,8 +143,7 @@ label.toggle{display:flex;align-items:center;justify-content:space-between;paddi
     <button class="nav" data-tab="settings"><span class="nicon">⚙</span>SETTINGS</button>
   </div>
 </div>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
- integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 (()=>{
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
@@ -172,14 +189,48 @@ function metersToDelta(m,angle){return {lat:(m*Math.cos(angle))/111320,lon:(m*Ma
 
 function initRealMap(){
  if(realMap || typeof L==="undefined") return;
- realMap=L.map("leafletMap",{zoomControl:false,attributionControl:true,preferCanvas:true})
-   .setView([S.lat||42.3265,S.lon||-122.8756],17);
- L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
+ realMap=L.map("leafletMap",{
+   zoomControl:false,
+   attributionControl:true,
+   preferCanvas:true,
+   touchZoom:true,
+   dragging:true,
+   doubleClickZoom:true,
+   scrollWheelZoom:true,
+   tap:true,
+   zoomSnap:0.5,
+   zoomDelta:0.5
+ }).setView([S.lat||42.3265,S.lon||-122.8756],17);
+
+ L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{
    maxZoom:19,
-   attribution:'&copy; OpenStreetMap'
+   minZoom:3,
+   attribution:'&copy; OpenStreetMap contributors',
+   crossOrigin:true,
+   updateWhenIdle:false,
+   keepBuffer:4
  }).addTo(realMap);
- const icon=L.divIcon({className:"",html:'<div style="width:18px;height:18px;border-radius:50%;background:#39f5ff;border:3px solid #eaffff;box-shadow:0 0 0 7px rgba(57,245,255,.17),0 0 22px #39f5ff"></div>',iconSize:[18,18],iconAnchor:[9,9]});
- playerMarker=L.marker([S.lat||42.3265,S.lon||-122.8756],{icon,interactive:false}).addTo(realMap);
+
+ const icon=L.divIcon({
+   className:"",
+   html:'<div class="playerPin"></div>',
+   iconSize:[24,24],
+   iconAnchor:[12,12]
+ });
+ playerMarker=L.marker([S.lat||42.3265,S.lon||-122.8756],{
+   icon,
+   interactive:false,
+   zIndexOffset:10000
+ }).addTo(realMap);
+
+ const fixSize=()=>{
+   if(!realMap)return;
+   realMap.invalidateSize({pan:false,animate:false});
+ };
+ requestAnimationFrame(()=>requestAnimationFrame(fixSize));
+ setTimeout(fixSize,250);
+ setTimeout(fixSize,900);
+
  realMap.on("zoomend moveend",()=>{syncZoomFromMap();renderPOIs()});
 }
 function syncZoomFromMap(){
@@ -209,42 +260,82 @@ async function fetchRealPOIs(){
  const q=`[out:json][timeout:8];(nwr(around:1300,${S.lat},${S.lon})["amenity"~"school|place_of_worship|library|hospital|police|bank|parking"];nwr(around:1300,${S.lat},${S.lon})["power"="substation"];nwr(around:1300,${S.lat},${S.lon})["public_transport"];);out center 60;`;
  try{
   const res=await fetch("https://overpass-api.de/api/interpreter",{method:"POST",body:q,headers:{"Content-Type":"text/plain"}});
-  if(!res.ok)throw 0;const data=await res.json();let real=[];
+  if(!res.ok)throw 0;
+  const data=await res.json(), real=[];
   for(const e of data.elements||[]){
-   const lat=e.lat??e.center?.lat, lon=e.lon??e.center?.lon;if(lat==null)continue;
-   let a=e.tags?.amenity,p=e.tags?.power,pt=e.tags?.public_transport,type=
-   a==="school"?"school":a==="place_of_worship"?"church":a==="library"?"library":a==="hospital"?"hospital":a==="police"?"police":a==="bank"?"bank":a==="parking"?"parking":p==="substation"?"utility":pt?"transit":"civic";
-   real.push({id:"osm"+e.id,lat,lon,type,name:e.tags?.name||TYPES[type].name,real:true});
+   const lat=e.lat??e.center?.lat, lon=e.lon??e.center?.lon;
+   if(lat==null||lon==null)continue;
+   const a=e.tags?.amenity,p=e.tags?.power,pt=e.tags?.public_transport;
+   const type=a==="school"?"school":
+     a==="place_of_worship"?"church":
+     a==="library"?"library":
+     a==="hospital"?"hospital":
+     a==="police"?"police":
+     a==="bank"?"bank":
+     a==="parking"?"parking":
+     p==="substation"?"utility":
+     pt?"transit":"civic";
+   real.push({id:"osm"+e.type+e.id,lat,lon,type,name:e.tags?.name||TYPES[type].name,real:true});
   }
-  if(real.length){pois=real.slice(0,55);renderPOIs();toast(real.length+" nearby public locations indexed");}
- }catch(e){toast("Public map data unavailable // procedural grid active")}
+
+  // Keep procedural nodes and merge real places into them instead of replacing everything.
+  const merged=new Map();
+  for(const p of pois) merged.set(p.id,p);
+  for(const p of real) merged.set(p.id,p);
+
+  // De-dupe locations that are nearly on top of each other.
+  const combined=[...merged.values()].sort((a,b)=>(b.real?1:0)-(a.real?1:0));
+  const deduped=[];
+  for(const p of combined){
+    const duplicate=deduped.some(x=>distanceM(p.lat,p.lon,x.lat,x.lon)<16 && p.type===x.type);
+    if(!duplicate) deduped.push(p);
+  }
+
+  // Always retain enough nearby targets so the grid never appears to "vanish".
+  pois=deduped.slice(0,70);
+  if(pois.length<12) seedPOIs();
+  renderPOIs();
+
+  if(real.length) toast(`${real.length} public locations indexed // grid merged`);
+  else toast("No public locations found nearby // local grid retained");
+ }catch(e){
+  if(!pois.length) seedPOIs();
+  renderPOIs();
+  toast("Public map data unavailable // local grid retained");
+ }
 }
 function renderPOIs(){
  if(S.lat==null)return;
  initRealMap();
- poiMarkers.forEach(m=>realMap?.removeLayer(m));poiMarkers=[];
  if(!realMap)return;
+ realMap.invalidateSize({pan:false});
+
+ const previous=poiMarkers;
+ poiMarkers=[];
+
  const range=95+S.upgrades.range*35;
- const bounds=realMap.getBounds().pad(.12);
+ const bounds=realMap.getBounds().pad(.35);
  const visible=pois.map(p=>({p,d:Math.round(distanceM(S.lat,S.lon,p.lat,p.lon))}))
    .filter(o=>bounds.contains([o.p.lat,o.p.lon]))
    .sort((a,b)=>a.d-b.d)
    .slice(0,28);
+
  for(const o of visible){
    const {p,d}=o,t=TYPES[p.type],available=d<=range,done=!!S.completed[p.id];
    const cls=done?"done":available?"available":"locked";
    const icon=L.divIcon({
      className:"",
-     html:`<button class="poi ${cls}" style="position:relative;left:0;top:0;margin:-22px 0 0 -22px">
-       <span class="ico">${t.icon}</span><span class="dist">${d}m</span>
-     </button>`,
-     iconSize:[1,1],
-     iconAnchor:[0,0]
+     html:`<div class="ctosPoi ${cls}"><span>${t.icon}</span><span class="poiDist">${d}m</span></div>`,
+     iconSize:[46,46],
+     iconAnchor:[23,23]
    });
-   const marker=L.marker([p.lat,p.lon],{icon,zIndexOffset:300}).addTo(realMap);
+   const marker=L.marker([p.lat,p.lon],{icon,zIndexOffset:1000}).addTo(realMap);
    marker.on("click",()=>openPOI(p,d));
    poiMarkers.push(marker);
  }
+
+ // Remove old markers only after the new marker set is on the map.
+ previous.forEach(m=>realMap.removeLayer(m));
  syncMapPosition();
 }
 function openPOI(p,d){
@@ -455,14 +546,14 @@ function startGPS(){
    {enableHighAccuracy:true, maximumAge:10000, timeout:20000}
  );
 }
-$("#locateBtn").onclick=()=>{startGPS();initRealMap();if(realMap&&S.lat!=null)realMap.setView([S.lat,S.lon],17,{animate:true});renderPOIs();toast("Recentered on GPS")};
+$("#locateBtn").onclick=()=>{startGPS();initRealMap();if(realMap&&S.lat!=null){realMap.invalidateSize();realMap.setView([S.lat,S.lon],Math.max(realMap.getZoom(),16),{animate:true})}renderPOIs();toast("Recentered on GPS")};
 $("#scanBtn").onclick=profilerScan;
 $("#zoomIn").onclick=()=>{initRealMap();realMap?.zoomIn();toast("Map zoom +")};
 $("#zoomOut").onclick=()=>{initRealMap();realMap?.zoomOut();toast("Map zoom −")};
 setInterval(()=>{simTick++;if(S.heat>0){S.heat=Math.max(0,S.heat-.35);if(simTick%5===0){save();updateHUD()}}},1000);
-window.addEventListener("resize",renderPOIs);updateHUD();ensureMissions();startGPS();
+window.addEventListener("resize",()=>{realMap?.invalidateSize();renderPOIs()});updateHUD();ensureMissions();startGPS();
 if("serviceWorker" in navigator){
-  window.addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js?v=5").catch(()=>{}));
+  window.addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js?v=7").catch(()=>{}));
 }
 })();
 </script>
