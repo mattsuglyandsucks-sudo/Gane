@@ -31,7 +31,7 @@ linear-gradient(#05080d,#060b11)}
 .main{position:relative;flex:1;min-height:0;overflow:hidden}
 #map{position:absolute;inset:0;overflow:hidden;background:#071018}
 #leafletMap{position:absolute;inset:0;z-index:0;touch-action:none}
-#leafletMap .leaflet-tile-pane{filter:invert(1) grayscale(1) sepia(1) saturate(5.5) hue-rotate(118deg) brightness(.34) contrast(2.05)}
+#leafletMap .leaflet-tile-pane{filter:invert(.92) grayscale(.88) sepia(.55) saturate(3.3) hue-rotate(118deg) brightness(.62) contrast(1.55)}
 #leafletMap .leaflet-control-attribution{font-size:8px;background:rgba(3,8,13,.72)!important;color:#7195a2!important}
 #leafletMap .leaflet-control-attribution a{color:#68dfe9!important}
 #leafletMap .leaflet-control-zoom{display:none}
@@ -96,13 +96,34 @@ border:1px solid #193847;border-radius:3px;padding:2px 4px;color:#c7e9ef;white-s
 #leafletMap:after{
   content:"";position:absolute;inset:0;pointer-events:none;z-index:400;
   background:
-    radial-gradient(circle at 50% 50%,rgba(0,255,220,.035),transparent 42%),
-    linear-gradient(rgba(0,0,0,.10),rgba(0,0,0,.28));
+    radial-gradient(circle at 50% 50%,rgba(0,255,220,.025),transparent 48%),
+    linear-gradient(rgba(0,0,0,.02),rgba(0,0,0,.08));
   mix-blend-mode:screen
 }
 .ctosPoi{background:#031015!important;border-color:#35f6df!important;color:#eaffff!important;
 box-shadow:0 0 0 4px rgba(53,246,223,.10),0 0 18px rgba(53,246,223,.55)!important}
 .playerPin{background:#35f6df!important;box-shadow:0 0 0 8px rgba(53,246,223,.22),0 0 30px #35f6df!important}
+
+#leafletMap .leaflet-tile{opacity:.96}
+#leafletMap .leaflet-pane{mix-blend-mode:normal}
+
+/* v9 gameplay systems */
+.factionBadge{display:inline-block;padding:3px 6px;border:1px solid #245062;border-radius:4px;font-size:9px;margin-right:4px;color:#b9f8ff}
+.contract{border-left:3px solid #39f5ff}
+.contract.urgent{border-left-color:#ffd65c}
+.contract.rival{border-left-color:#ff4b67}
+.feed{font:11px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace}
+.feed div{padding:5px 0;border-bottom:1px solid #102632}
+.rivalCard{position:relative;overflow:hidden}
+.rivalCard:before{content:"";position:absolute;inset:0 auto 0 0;width:3px;background:#ff4b67}
+.securityPips{letter-spacing:3px;color:#39f5ff}
+.rewardLine{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}
+.rewardLine span{font-size:10px;border:1px solid #234657;border-radius:4px;padding:3px 5px;background:#07131b}
+.incoming{border-color:#7c2e3a!important;box-shadow:0 0 24px rgba(255,75,103,.22)}
+.marketItem{display:flex;gap:10px;align-items:center}.marketItem .uinfo{flex:1}
+.objective{padding:7px 9px;background:#06111a;border:1px solid #163546;border-radius:6px;margin:5px 0}
+.bigNumber{font-size:25px;font-weight:900;color:#39f5ff}
+
 </style>
 </head>
 <body>
@@ -137,7 +158,7 @@ box-shadow:0 0 0 4px rgba(53,246,223,.10),0 0 18px rgba(53,246,223,.55)!importan
   </div>
   <div class="bottom">
     <button class="nav active" data-tab="map"><span class="nicon">⌖</span>GRID</button>
-    <button class="nav" data-tab="missions"><span class="nicon">▣</span>OPS</button>
+    <button class="nav" data-tab="missions"><span class="nicon">▣</span>CONTRACTS</button>
     <button class="nav" data-tab="skills"><span class="nicon">◇</span>SKILLS</button>
     <button class="nav" data-tab="profile"><span class="nicon">◉</span>PROFILE</button>
     <button class="nav" data-tab="settings"><span class="nicon">⚙</span>SETTINGS</button>
@@ -162,10 +183,13 @@ const TYPES={
  civic:{icon:"▥",name:"Civic Facility",min:20,max:190,diff:2,reward:[35,90]}
 };
 const initial={cash:0,xp:0,level:1,heat:0,hacks:0,rep:0,skill:0,lat:null,lon:null,accuracy:null,mapZoom:1.45,
- upgrades:{range:0,speed:0,stealth:0,payout:0,scanner:0},completed:{},missions:[],lastDay:"",poisMode:"auto",trackedDevice:null};
+ intel:0,fragments:0,seasonScore:0,networkRank:1,shield:100,lastRivalAttack:0,lastContractRefresh:0,
+ upgrades:{range:0,speed:0,stealth:0,payout:0,scanner:0,firewall:0,encryption:0,honeypot:0,traceback:0},
+ completed:{},missions:[],contracts:[],lastDay:"",poisMode:"auto",trackedDevice:null,rivalHistory:[],storyStep:0};
 let S=Object.assign({},initial,JSON.parse(localStorage.getItem("shadowgrid")||"{}"));
 S.upgrades=Object.assign({},initial.upgrades,S.upgrades||{});
-let pois=[],watchId=null,selected=null,simTick=0,devices=[],realMap=null,playerMarker=null,poiMarkers=[];
+S.contracts=S.contracts||[];S.rivalHistory=S.rivalHistory||[];S.intel=S.intel||0;S.fragments=S.fragments||0;S.seasonScore=S.seasonScore||0;S.networkRank=S.networkRank||1;S.shield=S.shield??100;
+let pois=[],watchId=null,selected=null,simTick=0,devices=[],realMap=null,playerMarker=null,poiMarkers=[],rivals=[];
 const save=()=>localStorage.setItem("shadowgrid",JSON.stringify(S));
 function toast(t){let e=$("#toast");e.textContent=t;e.classList.add("show");clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove("show"),1800)}
 function rnd(a,b){return Math.floor(Math.random()*(b-a+1))+a}
@@ -180,6 +204,7 @@ function prng(seed){
 }
 function levelReq(l){return 100+Math.floor(l*l*42)}
 function updateHUD(){
+ S.networkRank=Math.max(1,Math.min(25,1+Math.floor(Math.sqrt(Math.max(0,S.seasonScore))/4)));
  $("#cashChip").textContent="$"+S.cash.toLocaleString();$("#levelChip").textContent="LV "+S.level;
  $("#heatChip").textContent="HEAT "+Math.round(S.heat);$("#heatChip").classList.toggle("hot",S.heat>=50);
 }
@@ -377,7 +402,7 @@ function runHack(p,d){
 function resolveHack(p){
  const t=TYPES[p.type], stealth=S.upgrades.stealth*5, chance=Math.max(7,t.diff*13-stealth),detected=Math.random()*100<chance;
  const base=rnd(t.reward[0],t.reward[1]),cash=Math.round(base*(1+S.upgrades.payout*.14)),xp=18+t.diff*11;
- S.cash+=cash;S.hacks++;S.rep+=t.diff*2;gainXp(xp);if(detected){S.heat=Math.min(100,S.heat+rnd(10,22)+t.diff*3)}
+ S.cash+=cash;S.hacks++;S.rep+=t.diff*2;S.intel+=Math.random()<(.10+t.diff*.035)?1:0;S.seasonScore+=5+t.diff*2;contractProgress("POI");contractProgress("CHAIN");gainXp(xp);if(detected){S.heat=Math.min(100,S.heat+rnd(10,22)+t.diff*3)}
  S.completed[p.id]=Date.now();progressMissions(p.type);save();updateHUD();renderPOIs();
  $("#sheetBody").innerHTML=`<div class="card"><h3 class="${detected?"red":"green"}">${detected?"TRACE DETECTED":"ACCESS COMPLETE"}</h3>
  <div class="statgrid"><div class="stat"><span class="muted">CREDITS</span><b>+$${cash}</b></div><div class="stat"><span class="muted">XP</span><b>+${xp}</b></div></div>
@@ -385,6 +410,222 @@ function resolveHack(p){
  <button class="btn" id="again">RETURN TO GRID</button></div>`;$("#again").onclick=closeSheet;
 }
 
+
+const CREWS=[
+ {name:"Null Saints",tag:"NULL",style:"stealth"},
+ {name:"Ghostline",tag:"GHOST",style:"intel"},
+ {name:"Red Circuit",tag:"RED",style:"aggressive"},
+ {name:"Night Relay",tag:"NITE",style:"profit"}
+];
+const HANDLES=["CipherFox","ZeroStatic","NeonWraith","BitRook","GhostPacket","NullViper","HexCrow","WireSaint","KernelKid","DarkRelay","ByteMoth","SignalJack","RootWolf","ProxyQueen","DeadPixel","ArcGhost","PacketRat","VoidRunner","TraceZero","GlassKey"];
+
+function rankName(){
+ if(S.networkRank>=20)return "GRID LEGEND";
+ if(S.networkRank>=15)return "BLACK NODE";
+ if(S.networkRank>=10)return "GHOST";
+ if(S.networkRank>=6)return "OPERATOR";
+ if(S.networkRank>=3)return "RUNNER";
+ return "SCRIPT";
+}
+function securityRating(){
+ return 1+S.upgrades.firewall*1.1+S.upgrades.encryption*.9+S.upgrades.honeypot*.65+S.upgrades.traceback*.75;
+}
+function generateRivals(){
+ const r=prng(hash(((S.lat||0).toFixed(3))+","+((S.lon||0).toFixed(3))+Math.floor(Date.now()/300000)));
+ rivals=[];
+ const used=new Set();
+ for(let i=0;i<12;i++){
+  let handle=HANDLES[Math.floor(r()*HANDLES.length)];
+  while(used.has(handle))handle=HANDLES[Math.floor(r()*HANDLES.length)]+rnd(2,99);
+  used.add(handle);
+  const crew=CREWS[Math.floor(r()*CREWS.length)];
+  const level=Math.max(1,Math.round(S.level*(.55+r()*.95)));
+  rivals.push({
+   id:"r"+hash(handle+Math.floor(Date.now()/300000)),
+   handle,crew,level,
+   security:Math.min(10,1+Math.floor(level/2+r()*4)),
+   wallet:40+Math.floor(r()*(100+level*35)),
+   intel:1+Math.floor(r()*(3+level/4)),
+   rep:10+Math.floor(r()*250),
+   online:r()>.12,
+   distance:25+Math.floor(r()*450),
+   status:r()>.75?"HUNTING":"ROAMING"
+  });
+ }
+}
+function ensureContracts(force=false){
+ const now=Date.now();
+ if(!force&&S.contracts.length&&now-S.lastContractRefresh<10*60*1000)return;
+ const r=prng(hash((S.lat||0).toFixed(3)+Math.floor(now/600000)));
+ const types=["POI","PHONE","RIVAL","HEAT","CHAIN"];
+ const titles={
+  POI:["Backdoor Census","City Pulse","Infrastructure Sweep"],
+  PHONE:["Pocket Change","Profiler Harvest","Signal Fishing"],
+  RIVAL:["Bounty Packet","Crew Challenge","Ghost Hunt"],
+  HEAT:["Burn Notice","Disappear","Clean Exit"],
+  CHAIN:["Domino Run","Relay Storm","Chain Reaction"]
+ };
+ S.contracts=[];
+ for(let i=0;i<5;i++){
+   const type=types[Math.floor(r()*types.length)],goal=type==="RIVAL"?1:type==="HEAT"?1:2+Math.floor(r()*4);
+   S.contracts.push({
+     id:"c"+now+i,type,title:titles[type][Math.floor(r()*titles[type].length)],
+     goal,progress:0,reward:120+Math.floor(r()*260)+S.level*18,
+     intel:1+Math.floor(r()*3),claimed:false,
+     desc:type==="POI"?"Breach city infrastructure nodes":
+          type==="PHONE"?"Access nearby phones through Profiler":
+          type==="RIVAL"?"Successfully invade another operator":
+          type==="HEAT"?"Reduce Heat by at least 20":
+          "Complete hacks without leaving the grid"
+   });
+ }
+ S.lastContractRefresh=now;save();
+}
+function contractProgress(type,n=1){
+ ensureContracts();
+ for(const c of S.contracts){
+  if(!c.claimed&&c.type===type)c.progress=Math.min(c.goal,c.progress+n);
+ }
+ save();
+}
+function claimContract(id){
+ const c=S.contracts.find(x=>x.id===id);
+ if(!c||c.claimed||c.progress<c.goal)return;
+ c.claimed=true;S.cash+=c.reward;S.intel+=c.intel;S.seasonScore+=50+c.goal*10;
+ gainXp(35+c.goal*8);save();updateHUD();contractsView();toast("CONTRACT PAID // +$"+c.reward+" // +"+c.intel+" intel");
+}
+function contractsView(){
+ ensureContracts();
+ let h=`<div class="card"><div class="muted">WHY YOU HACK</div><h3>Own the Grid.</h3>
+ <div>Every breach earns money, intelligence and reputation. Use them to harden your rig, invade rival operators, climb the network rankings and unlock higher-value contracts.</div>
+ <div class="rewardLine"><span>$ CREDITS ${S.cash}</span><span>◆ INTEL ${S.intel}</span><span>◇ FRAGMENTS ${S.fragments}</span><span>RANK ${S.networkRank}</span></div></div>`;
+ for(const c of S.contracts){
+  const done=c.progress>=c.goal;
+  h+=`<div class="card contract ${c.type==="RIVAL"?"rival":c.type==="HEAT"?"urgent":""}">
+   <b>${c.title}</b><div class="muted">${c.desc}</div>
+   <div class="objective">${c.progress}/${c.goal}</div>
+   <div class="rewardLine"><span>$${c.reward}</span><span>◆ ${c.intel} INTEL</span></div>
+   ${done&&!c.claimed?`<button class="btn contractClaim" data-id="${c.id}">CLAIM CONTRACT</button>`:c.claimed?`<div class="green small">PAID</div>`:""}
+  </div>`;
+ }
+ h+=`<button class="btn" id="findRivals">OPEN RIVAL NETWORK</button>`;
+ openSheet("CONTRACT BOARD",h);
+ $$(".contractClaim").forEach(b=>b.onclick=()=>claimContract(b.dataset.id));
+ $("#findRivals").onclick=rivalNetwork;
+}
+function rivalNetwork(){
+ generateRivals();
+ let h=`<div class="card"><div class="muted">OPERATOR NETWORK</div><div class="bigNumber">${rankName()}</div>
+ <div class="rewardLine"><span>Score ${S.seasonScore}</span><span>Security ${securityRating().toFixed(1)}</span><span>Shield ${Math.round(S.shield)}%</span></div></div>`;
+ h+=rivals.map(r=>`<div class="card rivalCard rivalOpen" data-r="${r.id}">
+ <b>${r.handle}</b> <span class="factionBadge">${r.crew.tag}</span>
+ <div class="muted">LV ${r.level} · SEC ${r.security}/10 · ${r.distance}m · ${r.status}</div>
+ <div class="rewardLine"><span>Wallet ~$${r.wallet}</span><span>Intel ${r.intel}</span><span>Rep ${r.rep}</span></div></div>`).join("");
+ openSheet("RIVAL NETWORK",h);
+ $$(".rivalOpen").forEach(e=>e.onclick=()=>openRival(rivals.find(r=>r.id===e.dataset.r)));
+}
+function openRival(r){
+ if(!r)return;
+ const chance=Math.max(12,Math.min(92,64+(S.level-r.level)*3+S.upgrades.stealth*5+S.upgrades.scanner*2-r.security*4));
+ openSheet("TARGET // "+r.handle,`<div class="card rivalCard">
+ <h3>${r.handle} <span class="factionBadge">${r.crew.name}</span></h3>
+ <div class="muted">${r.status} · ${r.distance}m from your grid position</div>
+ <div class="statgrid" style="margin-top:9px"><div class="stat"><span class="muted">LEVEL</span><b>${r.level}</b></div><div class="stat"><span class="muted">SECURITY</span><b>${r.security}/10</b></div></div>
+ <div class="rewardLine"><span>EST $${r.wallet}</span><span>◆ ${r.intel} INTEL</span><span>${chance}% breach odds</span></div></div>
+ <div class="card"><b>INVASION PAYLOAD</b>
+ <button class="btn rivalHack" data-a=" siphon">CREDIT SIPHON</button>
+ <button class="btn rivalHack" data-a="intel">INTEL EXTRACT</button>
+ <button class="btn rivalHack" data-a="beacon">INJECT TRACKER</button>
+ <button class="btn rivalHack" data-a="burn">BURN THEIR TRACE</button></div>
+ <button class="btn" id="backRivals">← NETWORK</button>`);
+ $("#backRivals").onclick=rivalNetwork;
+ $$(".rivalHack").forEach(b=>b.onclick=()=>attackRival(r,b.dataset.a.trim(),chance));
+}
+function attackRival(r,action,chance){
+ const success=Math.random()*100<chance;
+ let reward=0,intel=0,msg="";
+ if(success){
+   if(action==="siphon"){reward=Math.round(r.wallet*(.35+Math.random()*.35));S.cash+=reward;msg="+$"+reward+" siphoned";}
+   if(action==="intel"){intel=Math.max(1,Math.round(r.intel*(.5+Math.random())));S.intel+=intel;msg="+"+intel+" intel extracted";}
+   if(action==="beacon"){S.fragments+=1;S.seasonScore+=35;msg="Tracker injected // +1 fragment";}
+   if(action==="burn"){S.heat=Math.max(0,S.heat-12);msg="Trace burned // heat -12";}
+   S.rep+=4+r.level;S.seasonScore+=25+r.level*3;S.heat=Math.min(100,S.heat+4+r.security);
+   contractProgress("RIVAL");gainXp(25+r.level*3);
+ }else{
+   S.heat=Math.min(100,S.heat+12+r.security*2);S.shield=Math.max(0,S.shield-rnd(3,9));
+   msg="BREACH REJECTED // counter-trace detected";
+ }
+ S.rivalHistory.unshift({time:Date.now(),text:(success?"Invaded ":"Failed against ")+r.handle+" // "+msg});
+ S.rivalHistory=S.rivalHistory.slice(0,20);save();updateHUD();
+ openSheet(success?"INVASION COMPLETE":"INVASION FAILED",`<div class="card ${success?"":"incoming"}"><h3 class="${success?"green":"red"}">${success?"ACCESS GRANTED":"COUNTERED"}</h3><div>${msg}</div>
+ <div class="muted" style="margin-top:8px">Rival invasions increase network score, but aggressive play raises Heat and makes your own device a more attractive target.</div>
+ <button class="btn" id="returnNetwork">RETURN TO NETWORK</button></div>`);
+ $("#returnNetwork").onclick=rivalNetwork;
+}
+function defenseMarket(){
+ const items=[
+  ["firewall","ACTIVE FIREWALL","Reduces success rate of incoming invasions.",350],
+  ["encryption","VAULT ENCRYPTION","Protects credits and intel from successful attackers.",425],
+  ["honeypot","HONEYPOT","Chance to punish an attacker and earn intel.",500],
+  ["traceback","TRACEBACK","Chance to identify and counter an attacker.",575]
+ ];
+ let h=`<div class="card"><b>YOUR DEVICE SECURITY</b><div class="bigNumber">${securityRating().toFixed(1)}</div>
+ <div class="muted">Incoming operators test this rating against their intrusion build.</div><div class="bar"><i style="width:${S.shield}%"></i></div><div class="muted">Integrity ${Math.round(S.shield)}%</div></div>`;
+ for(const [k,name,desc,base] of items){
+  const lv=S.upgrades[k]||0,cost=Math.round(base*(1+lv*.7));
+  h+=`<div class="card marketItem"><div class="uinfo"><b>${name} <span class="cyan">LV ${lv}/5</span></b><div class="muted">${desc}</div></div>
+  <button class="btn buySec" data-k="${k}" data-cost="${cost}" ${lv>=5?"disabled":""}>$${cost}</button></div>`;
+ }
+ h+=`<button class="btn" id="repairRig">REPAIR INTEGRITY // $${Math.max(40,Math.round((100-S.shield)*3))}</button>`;
+ openSheet("SECURITY MARKET",h);
+ $$(".buySec").forEach(b=>b.onclick=()=>{const k=b.dataset.k,c=+b.dataset.cost;if(S.cash>=c&&S.upgrades[k]<5){S.cash-=c;S.upgrades[k]++;S.shield=Math.min(100,S.shield+10);save();updateHUD();defenseMarket();toast("Security module installed")}else toast("Not enough credits")});
+ $("#repairRig").onclick=()=>{const c=Math.max(40,Math.round((100-S.shield)*3));if(S.cash>=c&&S.shield<100){S.cash-=c;S.shield=100;save();updateHUD();defenseMarket()}else toast("Repair unavailable")};
+}
+function maybeIncomingAttack(){
+ if(S.level<2)return;
+ const now=Date.now();
+ if(now-S.lastRivalAttack<12*60*1000)return;
+ // Rare by design; heat and reputation make it a little more likely.
+ const chance=.006 + Math.min(.018,S.heat/6000)+Math.min(.012,S.rep/25000);
+ if(Math.random()>chance)return;
+ S.lastRivalAttack=now;generateRivals();
+ const r=rivals[rnd(0,rivals.length-1)];
+ const defense=securityRating();
+ const attack=r.security+r.level*.18+Math.random()*3;
+ const blocked=defense+Math.random()*4>=attack;
+ let text="";
+ if(blocked){
+   let bonus=0;
+   if(Math.random()<S.upgrades.honeypot*.12){bonus=1;S.intel++;text=" Honeypot captured +1 intel."}
+   text=`${r.handle} attempted an invasion. Firewall rejected the payload.`+text;
+   S.seasonScore+=10;
+ }else{
+   const protectedPct=Math.min(.75,S.upgrades.encryption*.13);
+   const maxLoss=Math.max(8,Math.round(S.cash*(.025+Math.random()*.04)*(1-protectedPct)));
+   const loss=Math.min(S.cash,maxLoss);S.cash-=loss;S.shield=Math.max(0,S.shield-rnd(5,14));
+   text=`${r.handle} breached your device and siphoned $${loss}.`;
+   if(Math.random()<S.upgrades.traceback*.14){S.fragments++;text+=" Traceback captured a fragment."}
+ }
+ S.rivalHistory.unshift({time:now,text});S.rivalHistory=S.rivalHistory.slice(0,20);save();updateHUD();
+ openSheet(blocked?"INTRUSION BLOCKED":"INCOMING INVASION",`<div class="card incoming"><h3 class="${blocked?"green":"red"}">${blocked?"DEFENSE HELD":"DEVICE BREACHED"}</h3><div>${text}</div>
+ <div class="muted" style="margin-top:8px">Incoming invasions are uncommon. Upgrade your device security to make them even harder.</div>
+ <button class="btn" id="securityNow">OPEN SECURITY</button></div>`);
+ $("#securityNow").onclick=defenseMarket;
+}
+function networkProfile(){
+ const hist=S.rivalHistory.length?S.rivalHistory.map(x=>`<div>${new Date(x.time).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})} // ${x.text}</div>`).join(""):"<div>No rival activity yet.</div>";
+ openSheet("NETWORK PROFILE",`<div class="card"><div class="muted">CURRENT RANK</div><div class="bigNumber">${rankName()}</div>
+ <div class="rewardLine"><span>Score ${S.seasonScore}</span><span>◆ Intel ${S.intel}</span><span>◇ Fragments ${S.fragments}</span></div></div>
+ <div class="card"><b>THE LOOP</b>
+ <div class="objective">1. Scan the city for infrastructure, phones and operators.</div>
+ <div class="objective">2. Complete contracts for credits and intel.</div>
+ <div class="objective">3. Upgrade intrusion tools and device defenses.</div>
+ <div class="objective">4. Invade rivals for bigger rewards and network score.</div>
+ <div class="objective">5. Push your Heat too far and the grid pushes back.</div></div>
+ <div class="card feed"><b>NETWORK FEED</b>${hist}</div>
+ <button class="btn" id="secMarket">DEVICE SECURITY</button>`);
+ $("#secMarket").onclick=defenseMarket;
+}
 function makeDevices(){
  const first=["Avery","Maya","Jordan","Eli","Noah","Riley","Morgan","Taylor","Cameron","Quinn","Alex","Sam","Jamie","Drew","Casey","Robin"];
  const last=["Reed","Torres","Chen","Miller","Diaz","Patel","Brooks","Nguyen","Walker","Price","Kim","Martinez","Gray","Bennett"];
@@ -416,7 +657,9 @@ function profilerScan(){
    <span class="tag">SEC ${d.security}</span><span class="tag">${d.trait}</span>${d.tracked?'<span class="tag green">TRACKED</span>':''}</div>
    <div class="cyan">›</div>
  </div>`).join("");
- openSheet("PROFILER // NEARBY",`<div class="muted" style="margin-bottom:8px">Nearby personal devices detected: ${devices.length}</div>${rows}`);
+ openSheet("PROFILER // NEARBY",`<div class="muted" style="margin-bottom:8px">Nearby personal devices detected: ${devices.length}</div>
+ <div class="row"><button class="btn" id="scanRivals">OPERATORS</button><button class="btn" id="scanContracts">CONTRACTS</button></div>${rows}`);
+ $("#scanRivals").onclick=rivalNetwork;$("#scanContracts").onclick=contractsView;
  $$(".device[data-device]").forEach(e=>e.onclick=()=>openDevice(devices.find(d=>d.id===e.dataset.device)));
 }
 function openDevice(d){
@@ -444,11 +687,11 @@ function deviceAction(d,a){
    const gain=Math.max(8,Math.round(d.worth*(.45+S.upgrades.payout*.08)));
    S.cash+=gain;S.heat=Math.min(100,S.heat+d.security*2);msg=`Account token routed // +$${gain}`;d.used=true;
  } else if(a==="distraction"){
-   const drop=4+S.upgrades.stealth*2;S.heat=Math.max(0,S.heat-drop);msg=`Device distraction triggered // heat -${drop}`;d.used=true;
+   const before=S.heat,drop=4+S.upgrades.stealth*2;S.heat=Math.max(0,S.heat-drop);if(before-S.heat>=20)contractProgress("HEAT");msg=`Device distraction triggered // heat -${drop}`;d.used=true;
  } else if(a==="track"){
    S.trackedDevice=d.name;devices.forEach(x=>x.tracked=x.id===d.id);msg=`${d.name} marked in Profiler`;
  }
- save();updateHUD();toast(msg);openDevice(d);
+ if(a!=="track"){contractProgress("PHONE");S.seasonScore+=4;}save();updateHUD();toast(msg);openDevice(d);
 }
 function ensureMissions(){
  const day=new Date().toISOString().slice(0,10);if(S.lastDay!==day||!S.missions?.length){
@@ -480,9 +723,11 @@ function skillsView(){
 function profileView(){
  const req=levelReq(S.level), pct=S.xp/req*100;
  openSheet("PROFILE",`<div class="card"><h3>SHADOW OPERATIVE</h3><div class="bar"><i style="width:${pct}%"></i></div><div class="muted">${S.xp}/${req} XP to next level</div></div>
- <div class="statgrid"><div class="stat"><span class="muted">TOTAL HACKS</span><b>${S.hacks}</b></div><div class="stat"><span class="muted">REPUTATION</span><b>${S.rep}</b></div><div class="stat"><span class="muted">CREDITS</span><b>$${S.cash}</b></div><div class="stat"><span class="muted">HEAT</span><b>${Math.round(S.heat)}</b></div></div>
- <div class="card" style="margin-top:8px"><b>Passive heat decay</b><div class="muted">Heat fades over time while the game is open. High heat increases the pressure of future encounters.</div><button class="btn" id="cool">BURN $150 // DROP 25 HEAT</button></div>`);
- $("#cool").onclick=()=>{if(S.cash>=150&&S.heat>0){S.cash-=150;S.heat=Math.max(0,S.heat-25);save();updateHUD();profileView()}else toast("Not enough credits or no heat to clear")}
+ <div class="statgrid"><div class="stat"><span class="muted">TOTAL HACKS</span><b>${S.hacks}</b></div><div class="stat"><span class="muted">REPUTATION</span><b>${S.rep}</b></div><div class="stat"><span class="muted">CREDITS</span><b>$${S.cash}</b></div><div class="stat"><span class="muted">HEAT</span><b>${Math.round(S.heat)}</b></div><div class="stat"><span class="muted">INTEL</span><b>${S.intel}</b></div><div class="stat"><span class="muted">NETWORK</span><b>${rankName()}</b></div></div>
+ <div class="card" style="margin-top:8px"><b>Passive heat decay</b><div class="muted">Heat fades over time while the game is open. High heat increases the pressure of future encounters.</div><button class="btn" id="cool">BURN $150 // DROP 25 HEAT</button></div>
+ <button class="btn" id="networkProfile">NETWORK PROFILE</button><button class="btn" id="securityMarket">DEVICE SECURITY</button>`);
+ $("#cool").onclick=()=>{if(S.cash>=150&&S.heat>0){const before=S.heat;S.cash-=150;S.heat=Math.max(0,S.heat-25);if(before-S.heat>=20)contractProgress("HEAT");save();updateHUD();profileView()}else toast("Not enough credits or no heat to clear")};
+ $("#networkProfile").onclick=networkProfile;$("#securityMarket").onclick=defenseMarket
 }
 function settingsView(){
  openSheet("SETTINGS",`<div class="card"><label class="toggle"><span><b>Use public OSM places</b><div class="muted">Schools, churches, libraries, civic facilities, etc.</div></span><input id="osm" type="checkbox" ${S.poisMode!=="procedural"?"checked":""}></label></div>
@@ -494,7 +739,7 @@ function settingsView(){
 function openSheet(title,html){$("#sheetTitle").textContent=title;$("#sheetBody").innerHTML=html;$("#sheet").classList.add("open")}
 function closeSheet(){$("#sheet").classList.remove("open");$$(".nav").forEach(n=>n.classList.toggle("active",n.dataset.tab==="map"))}
 $("#closeSheet").onclick=closeSheet;
-$$(".nav").forEach(n=>n.onclick=()=>{let t=n.dataset.tab;$$(".nav").forEach(x=>x.classList.toggle("active",x===n));if(t==="map")closeSheet();if(t==="missions")missionsView();if(t==="skills")skillsView();if(t==="profile")profileView();if(t==="settings")settingsView()});
+$$(".nav").forEach(n=>n.onclick=()=>{let t=n.dataset.tab;$$(".nav").forEach(x=>x.classList.toggle("active",x===n));if(t==="map")closeSheet();if(t==="missions")contractsView();if(t==="skills")skillsView();if(t==="profile")profileView();if(t==="settings")settingsView()});
 function startGPS(){
  const coord=$("#coords");
  if(!("geolocation" in navigator)){
@@ -550,10 +795,10 @@ $("#locateBtn").onclick=()=>{startGPS();initRealMap();if(realMap&&S.lat!=null){r
 $("#scanBtn").onclick=profilerScan;
 $("#zoomIn").onclick=()=>{initRealMap();realMap?.zoomIn();toast("Map zoom +")};
 $("#zoomOut").onclick=()=>{initRealMap();realMap?.zoomOut();toast("Map zoom −")};
-setInterval(()=>{simTick++;if(S.heat>0){S.heat=Math.max(0,S.heat-.35);if(simTick%5===0){save();updateHUD()}}},1000);
-window.addEventListener("resize",()=>{realMap?.invalidateSize();renderPOIs()});updateHUD();ensureMissions();startGPS();
+setInterval(()=>{simTick++;if(S.heat>0){S.heat=Math.max(0,S.heat-.35);if(simTick%5===0){save();updateHUD()}}if(simTick%15===0)maybeIncomingAttack();},1000);
+window.addEventListener("resize",()=>{realMap?.invalidateSize();renderPOIs()});updateHUD();ensureMissions();ensureContracts();startGPS();
 if("serviceWorker" in navigator){
-  window.addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js?v=7").catch(()=>{}));
+  window.addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js?v=9").catch(()=>{}));
 }
 })();
 </script>
