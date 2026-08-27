@@ -10,6 +10,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="Shadow Grid" />
 <title>ctOS: Shadow Grid</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+ integrity="sha256-p4NxAoJBhIINfQ3ynqlnMZ6Xg1T5Wz0tL0p1N6N5GfU=" crossorigin=""/>
 <style>
 :root{
   --bg:#05080d;--panel:#0a111a;--panel2:#0d1723;--line:#1d3446;--cyan:#39f5ff;
@@ -28,31 +30,44 @@ linear-gradient(#05080d,#060b11)}
 .chip{padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:#071019;color:#b9dce7;font-size:11px;white-space:nowrap}
 .chip.hot{color:#fff;border-color:#7e2432;background:#35121a}
 .main{position:relative;flex:1;min-height:0;overflow:hidden}
-#map{position:absolute;inset:0;overflow:hidden;touch-action:none;background:#071018}
-.grid{position:absolute;inset:-100px;background-image:
+#map{position:absolute;inset:0;overflow:hidden;background:#071018}
+#leafletMap{position:absolute;inset:0;z-index:0}
+#leafletMap .leaflet-tile-pane{filter:grayscale(1) brightness(.42) contrast(1.35) sepia(.2) hue-rotate(145deg) saturate(1.9)}
+#leafletMap .leaflet-control-attribution{font-size:8px;background:rgba(3,8,13,.72)!important;color:#7195a2!important}
+#leafletMap .leaflet-control-attribution a{color:#68dfe9!important}
+#leafletMap .leaflet-control-zoom{display:none}
+.mapTint{position:absolute;inset:0;z-index:1;pointer-events:none;background:
+linear-gradient(rgba(12,40,52,.17),rgba(2,7,12,.30)),
+radial-gradient(circle at 50% 50%,transparent 0 40%,rgba(0,10,18,.28) 100%);
+mix-blend-mode:screen}
+.mapNoise{position:absolute;inset:0;z-index:2;pointer-events:none;opacity:.12;background-image:
+linear-gradient(rgba(57,245,255,.08) 1px,transparent 1px),
+linear-gradient(90deg,rgba(57,245,255,.08) 1px,transparent 1px);
+background-size:48px 48px}
+.grid{display:none;position:absolute;inset:-100px;background-image:
 linear-gradient(rgba(57,245,255,.045) 1px,transparent 1px),
 linear-gradient(90deg,rgba(57,245,255,.045) 1px,transparent 1px);
 background-size:42px 42px;transform:rotate(.001deg)}
-.road{position:absolute;background:#0d1b27;box-shadow:0 0 0 1px rgba(90,130,150,.08) inset}
+.road{display:none;position:absolute;background:#0d1b27;box-shadow:0 0 0 1px rgba(90,130,150,.08) inset}
 .road.h{height:22px;width:140%;left:-20%}.road.v{width:22px;height:140%;top:-20%}
 .poi{position:absolute;width:44px;height:44px;margin:-22px;border-radius:50%;border:1px solid #315163;background:#0b1620;display:flex;align-items:center;justify-content:center;box-shadow:0 0 16px rgba(0,0,0,.55);z-index:4;transition:.15s transform}
 .poi:active{transform:scale(.9)}.poi.available{border-color:var(--cyan);box-shadow:0 0 18px rgba(57,245,255,.22)}
 .poi.locked{opacity:.55}.poi.done{border-color:#376c50;color:var(--green)}.poi.hot{border-color:var(--red);box-shadow:0 0 16px rgba(255,75,103,.25)}
 .poi .ico{font-size:19px}.poi .dist{position:absolute;top:47px;font-size:9px;background:#071019dd;padding:2px 4px;border-radius:3px;color:#9fc3cf;white-space:nowrap}
-.player{position:absolute;left:50%;top:50%;width:20px;height:20px;margin:-10px;border-radius:50%;background:var(--cyan);border:3px solid #dfffff;box-shadow:0 0 0 7px rgba(57,245,255,.12),0 0 20px var(--cyan);z-index:10}
+.player{display:none;position:absolute;left:50%;top:50%;width:20px;height:20px;margin:-10px;border-radius:50%;background:var(--cyan);border:3px solid #dfffff;box-shadow:0 0 0 7px rgba(57,245,255,.12),0 0 20px var(--cyan);z-index:10}
 .player:after{content:"";position:absolute;width:4px;height:12px;left:5px;top:-11px;background:#dfffff;border-radius:3px;transform-origin:50% 18px}
-.ring{position:absolute;left:50%;top:50%;width:160px;height:160px;margin:-80px;border:1px solid rgba(57,245,255,.09);border-radius:50%;z-index:1}
+.ring{display:none;position:absolute;left:50%;top:50%;width:160px;height:160px;margin:-80px;border:1px solid rgba(57,245,255,.09);border-radius:50%;z-index:1}
 .coords{position:absolute;left:8px;top:8px;z-index:12;padding:6px 7px;background:#041018cc;border:1px solid var(--line);font-size:10px;color:#8fb6c2}
-.mapBtns{position:absolute;right:9px;top:9px;display:flex;flex-direction:column;gap:7px;z-index:12}
+.mapBtns{position:absolute;right:9px;top:9px;display:flex;flex-direction:column;gap:7px;z-index:12}.zoomCtl{display:flex;flex-direction:column;gap:5px;margin-top:5px}.zoomCtl .iconBtn{height:36px}
 .iconBtn{width:42px;height:42px;border:1px solid var(--line);border-radius:8px;background:#071019e6;color:var(--cyan);font-size:17px}
 .bottom{height:78px;padding:7px 8px calc(7px + var(--safe));display:grid;grid-template-columns:repeat(5,1fr);gap:5px;border-top:1px solid var(--line);background:#050b11;z-index:25}
 .nav{border:1px solid transparent;background:transparent;color:#6f929e;border-radius:7px;font-size:10px}.nav .nicon{display:block;font-size:20px;margin-bottom:3px}.nav.active{color:var(--cyan);background:#09141e;border-color:#183245}
-.sheet{position:absolute;inset:auto 0 0 0;max-height:72%;z-index:20;background:linear-gradient(#0b141e,#081019);border-top:1px solid #234153;border-radius:16px 16px 0 0;transform:translateY(105%);transition:.25s;overflow:hidden;box-shadow:0 -12px 40px #0008}
+.sheet{position:absolute;inset:auto 0 0 0;height:min(78%,680px);max-height:78%;z-index:20;background:linear-gradient(#0b141e,#081019);border-top:1px solid #234153;border-radius:16px 16px 0 0;transform:translateY(105%);transition:.25s;overflow:hidden;box-shadow:0 -12px 40px #0008;display:flex;flex-direction:column}
 .sheet.open{transform:translateY(0)}
 .handle{width:46px;height:4px;background:#33505f;border-radius:2px;margin:7px auto}
 .sheetHead{padding:6px 15px 11px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #142a38}
 .sheetHead h2{font-size:16px;margin:0}.sheetHead .close{margin-left:auto;background:none;border:0;color:#81aab7;font-size:22px}
-.sheetBody{padding:12px 13px 18px;overflow:auto;max-height:calc(72vh - 54px);overscroll-behavior:contain}
+.sheetBody{padding:12px 13px calc(24px + var(--safe));overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;touch-action:pan-y;-webkit-overflow-scrolling:touch;flex:1;min-height:0}
 .card{border:1px solid #173142;background:#09141e;border-radius:9px;padding:11px;margin-bottom:8px}.card h3{margin:0 0 5px;font-size:13px}.muted{color:var(--muted);font-size:11px}.cyan{color:var(--cyan)}.green{color:var(--green)}.yellow{color:var(--yellow)}.red{color:var(--red)}
 .bar{height:7px;background:#101f2a;border-radius:9px;overflow:hidden;margin:7px 0}.bar i{display:block;height:100%;background:var(--cyan);width:50%}
 .btn{width:100%;border:1px solid #286074;background:#0c2731;color:#d9fbff;border-radius:7px;padding:11px 10px;font-weight:800;letter-spacing:.3px;margin-top:8px}.btn:active{transform:translateY(1px);background:#103543}.btn.red{border-color:#7c2e3a;background:#2b1117}.btn:disabled{opacity:.4}
@@ -63,11 +78,12 @@ background-size:42px 42px;transform:rotate(.001deg)}
 .console{height:118px;overflow:hidden;border:1px solid #153042;border-radius:6px;background:#03080d;padding:7px;font:10px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;color:#80dbe2;margin-top:8px}
 .toast{position:absolute;top:72px;left:50%;transform:translate(-50%,-20px);padding:8px 12px;border:1px solid #285164;border-radius:6px;background:#07131ce8;color:#dffcff;z-index:50;opacity:0;pointer-events:none;transition:.2s;max-width:88%;text-align:center}
 .toast.show{opacity:1;transform:translate(-50%,0)}
-.scan{position:absolute;left:50%;top:50%;width:10px;height:10px;margin:-5px;border:1px solid var(--cyan);border-radius:50%;opacity:0;z-index:2}.scan.go{animation:scan 1.1s ease-out}
+.scan{position:absolute;left:50%;top:50%;z-index:11;width:10px;height:10px;margin:-5px;border:1px solid var(--cyan);border-radius:50%;opacity:0;}.scan.go{animation:scan 1.1s ease-out}
 @keyframes scan{0%{opacity:.8;transform:scale(1)}100%{opacity:0;transform:scale(45)}}
 .pulse{animation:pulse 1.1s infinite}@keyframes pulse{50%{box-shadow:0 0 28px rgba(57,245,255,.5)}}
 .hackline{height:12px;background:#071019;border:1px solid #173d4e;margin:4px 0;position:relative;overflow:hidden}.hackline i{height:100%;width:16%;background:var(--cyan);position:absolute;left:0;animation:slide 1.1s linear infinite}@keyframes slide{50%{left:84%}}
 .small{font-size:10px}.divider{height:1px;background:#153042;margin:10px 0}
+.device{display:flex;align-items:center;gap:10px;cursor:pointer}.device .avatar{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;border:1px solid #2b5868;background:#0b1c27;font-size:19px;flex:0 0 auto}.device .dmain{flex:1;min-width:0}.device .dmain b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.tag{display:inline-block;font-size:9px;padding:3px 5px;border:1px solid #23485a;border-radius:4px;margin:4px 4px 0 0;color:#9ed7e2}.poi.dim{opacity:.28}.poi.focused{transform:scale(1.12);z-index:8}
 label.toggle{display:flex;align-items:center;justify-content:space-between;padding:9px 0}input[type=checkbox]{width:20px;height:20px;accent-color:#2bd6e4}
 </style>
 </head>
@@ -83,13 +99,20 @@ label.toggle{display:flex;align-items:center;justify-content:space-between;paddi
   </div>
   <div class="main">
     <div id="map">
+      <div id="leafletMap"></div>
+      <div class="mapTint"></div>
+      <div class="mapNoise"></div>
       <div class="grid" id="grid"></div>
       <div class="road h" style="top:28%"></div><div class="road h" style="top:67%"></div>
       <div class="road v" style="left:24%"></div><div class="road v" style="left:72%"></div>
       <div class="ring"></div><div class="scan" id="scanFx"></div>
       <div class="player" id="player"></div>
       <div class="coords" id="coords">GPS: starting…</div>
-      <div class="mapBtns"><button class="iconBtn" id="locateBtn">◎</button><button class="iconBtn" id="scanBtn">⌁</button></div>
+      <div class="mapBtns">
+  <button class="iconBtn" id="locateBtn" aria-label="Refresh GPS">◎</button>
+  <button class="iconBtn" id="scanBtn" aria-label="Profiler scan">⌁</button>
+  <div class="zoomCtl"><button class="iconBtn" id="zoomIn" aria-label="Zoom in">＋</button><button class="iconBtn" id="zoomOut" aria-label="Zoom out">−</button></div>
+</div>
     </div>
     <div class="toast" id="toast"></div>
     <div class="sheet" id="sheet"><div class="handle"></div><div class="sheetHead"><h2 id="sheetTitle">SYSTEM</h2><button class="close" id="closeSheet">×</button></div><div class="sheetBody" id="sheetBody"></div></div>
@@ -102,6 +125,8 @@ label.toggle{display:flex;align-items:center;justify-content:space-between;paddi
     <button class="nav" data-tab="settings"><span class="nicon">⚙</span>SETTINGS</button>
   </div>
 </div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+ integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
 (()=>{
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
@@ -119,11 +144,11 @@ const TYPES={
  parking:{icon:"P",name:"Parking System",min:12,max:140,diff:1,reward:[12,40]},
  civic:{icon:"▥",name:"Civic Facility",min:20,max:190,diff:2,reward:[35,90]}
 };
-const initial={cash:0,xp:0,level:1,heat:0,hacks:0,rep:0,skill:0,lat:null,lon:null,accuracy:null,
- upgrades:{range:0,speed:0,stealth:0,payout:0,scanner:0},completed:{},missions:[],lastDay:"",poisMode:"auto"};
+const initial={cash:0,xp:0,level:1,heat:0,hacks:0,rep:0,skill:0,lat:null,lon:null,accuracy:null,mapZoom:1.45,
+ upgrades:{range:0,speed:0,stealth:0,payout:0,scanner:0},completed:{},missions:[],lastDay:"",poisMode:"auto",trackedDevice:null};
 let S=Object.assign({},initial,JSON.parse(localStorage.getItem("shadowgrid")||"{}"));
 S.upgrades=Object.assign({},initial.upgrades,S.upgrades||{});
-let pois=[],watchId=null,selected=null,simTick=0;
+let pois=[],watchId=null,selected=null,simTick=0,devices=[],realMap=null,playerMarker=null,poiMarkers=[];
 const save=()=>localStorage.setItem("shadowgrid",JSON.stringify(S));
 function toast(t){let e=$("#toast");e.textContent=t;e.classList.add("show");clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove("show"),1800)}
 function rnd(a,b){return Math.floor(Math.random()*(b-a+1))+a}
@@ -144,6 +169,31 @@ function updateHUD(){
 function gainXp(n){S.xp+=n;while(S.xp>=levelReq(S.level)){S.xp-=levelReq(S.level);S.level++;S.skill++;toast("LEVEL UP // skill point acquired")}save();updateHUD()}
 function distanceM(lat1,lon1,lat2,lon2){const R=6371e3,p1=lat1*Math.PI/180,p2=lat2*Math.PI/180,dp=(lat2-lat1)*Math.PI/180,dl=(lon2-lon1)*Math.PI/180;const a=Math.sin(dp/2)**2+Math.cos(p1)*Math.cos(p2)*Math.sin(dl/2)**2;return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))}
 function metersToDelta(m,angle){return {lat:(m*Math.cos(angle))/111320,lon:(m*Math.sin(angle))/(111320*Math.cos((S.lat||45)*Math.PI/180))}}
+
+function initRealMap(){
+ if(realMap || typeof L==="undefined") return;
+ realMap=L.map("leafletMap",{zoomControl:false,attributionControl:true,preferCanvas:true})
+   .setView([S.lat||42.3265,S.lon||-122.8756],17);
+ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
+   maxZoom:19,
+   attribution:'&copy; OpenStreetMap'
+ }).addTo(realMap);
+ const icon=L.divIcon({className:"",html:'<div style="width:18px;height:18px;border-radius:50%;background:#39f5ff;border:3px solid #eaffff;box-shadow:0 0 0 7px rgba(57,245,255,.17),0 0 22px #39f5ff"></div>',iconSize:[18,18],iconAnchor:[9,9]});
+ playerMarker=L.marker([S.lat||42.3265,S.lon||-122.8756],{icon,interactive:false}).addTo(realMap);
+ realMap.on("zoomend moveend",()=>{syncZoomFromMap();renderPOIs()});
+}
+function syncZoomFromMap(){
+ if(!realMap)return;
+ const z=realMap.getZoom();
+ S.mapZoom=Math.max(.75,Math.min(3,.75+(z-14)*.38));
+}
+function syncMapPosition(){
+ if(!realMap)return;
+ playerMarker?.setLatLng([S.lat,S.lon]);
+ const center=realMap.getCenter();
+ const drift=distanceM(S.lat,S.lon,center.lat,center.lng);
+ if(drift>180) realMap.panTo([S.lat,S.lon],{animate:true,duration:.5});
+}
 function seedPOIs(){
  if(S.lat==null){S.lat=42.3265;S.lon=-122.8756}
  const key=S.lat.toFixed(3)+","+S.lon.toFixed(3), r=prng(hash(key)), names=Object.keys(TYPES);
@@ -170,16 +220,32 @@ async function fetchRealPOIs(){
  }catch(e){toast("Public map data unavailable // procedural grid active")}
 }
 function renderPOIs(){
- $$(".poi").forEach(e=>e.remove());if(S.lat==null)return;
- const w=$("#map").clientWidth,h=$("#map").clientHeight, scale=0.72+S.upgrades.range*.09;
- for(const p of pois){
-  const dy=(p.lat-S.lat)*111320, dx=(p.lon-S.lon)*111320*Math.cos(S.lat*Math.PI/180), px=w/2+dx*scale,py=h/2-dy*scale;
-  if(px<-30||px>w+30||py<-30||py>h+30)continue;
-  const d=Math.round(distanceM(S.lat,S.lon,p.lat,p.lon)),t=TYPES[p.type],range=95+S.upgrades.range*35;
-  const e=document.createElement("button");e.className="poi "+(d<=range?"available":"locked")+(S.completed[p.id]?" done":"");
-  e.style.left=px+"px";e.style.top=py+"px";e.innerHTML=`<span class="ico">${t.icon}</span><span class="dist">${d}m</span>`;
-  e.onclick=()=>openPOI(p,d);$("#map").appendChild(e);
+ if(S.lat==null)return;
+ initRealMap();
+ poiMarkers.forEach(m=>realMap?.removeLayer(m));poiMarkers=[];
+ if(!realMap)return;
+ const range=95+S.upgrades.range*35;
+ const bounds=realMap.getBounds().pad(.12);
+ const visible=pois.map(p=>({p,d:Math.round(distanceM(S.lat,S.lon,p.lat,p.lon))}))
+   .filter(o=>bounds.contains([o.p.lat,o.p.lon]))
+   .sort((a,b)=>a.d-b.d)
+   .slice(0,28);
+ for(const o of visible){
+   const {p,d}=o,t=TYPES[p.type],available=d<=range,done=!!S.completed[p.id];
+   const cls=done?"done":available?"available":"locked";
+   const icon=L.divIcon({
+     className:"",
+     html:`<button class="poi ${cls}" style="position:relative;left:0;top:0;margin:-22px 0 0 -22px">
+       <span class="ico">${t.icon}</span><span class="dist">${d}m</span>
+     </button>`,
+     iconSize:[1,1],
+     iconAnchor:[0,0]
+   });
+   const marker=L.marker([p.lat,p.lon],{icon,zIndexOffset:300}).addTo(realMap);
+   marker.on("click",()=>openPOI(p,d));
+   poiMarkers.push(marker);
  }
+ syncMapPosition();
 }
 function openPOI(p,d){
  selected=p;const t=TYPES[p.type],range=95+S.upgrades.range*35,done=S.completed[p.id];
@@ -187,24 +253,24 @@ function openPOI(p,d){
  <div class="card"><div class="muted">${p.real?"PUBLIC LOCATION // OSM":"PROCEDURAL GRID NODE"}</div>
  <h3>${t.name}</h3><div class="muted">Range ${d}m / ${range}m · Security ${t.diff}/5</div>
  <div class="divider"></div><div>${flavor(p.type)}</div>
- <button class="btn" id="hackBtn" ${d>range?"disabled":""}>${done?"RE-ENTER SYSTEM":"INITIATE FAKE BREACH"}</button></div>
+ <button class="btn" id="hackBtn" ${d>range?"disabled":""}>${done?"RE-ENTER SYSTEM":"INITIATE BREACH"}</button></div>
  <div class="card"><b>Available vectors</b><div class="muted" style="margin-top:5px">${vectors(p.type).join(" · ")}</div></div>`);
  $("#hackBtn")?.addEventListener("click",()=>runHack(p,d));
 }
 function flavor(t){return {
- school:"Campus access node detected. Simulate access to PA controls, doors, camera loops and digital signage.",
- church:"Community facility node detected. Simulate lighting, bells, AV systems and local cameras.",
- library:"Public information node. Simulate terminals, lighting, printers and camera feeds.",
- hospital:"High-security simulated infrastructure. No real systems are contacted.",
- police:"Restricted fictional ctOS node. High payout, very high simulated detection risk.",
+ school:"Campus access node detected. PA controls, doors, camera loops and digital signage are exposed through the local grid.",
+ church:"Community facility node detected. Lighting, bells, AV systems and local cameras are visible on the grid.",
+ library:"Public information node. Terminals, lighting, printers and camera feeds are available.",
+ hospital:"High-security infrastructure with limited access windows.",
+ police:"Restricted ctOS node. High payout, very high detection risk.",
  transit:"Transit routing controls and signage available in the simulation.",
- utility:"Power-routing puzzle node. Fictional switching only.",
+ utility:"Power-routing node with switching and alarm controls.",
  camera:"Low-security camera node useful for reconnaissance and chaining.",
  tower:"Signal relay that can reveal additional nearby targets.",
- bank:"High-security financial simulation node. Rewards are game currency only.",
+ bank:"High-security financial node with valuable data routes.",
  parking:"Parking gate, ticketing and camera simulation.",
  civic:"Municipal facility with mixed fictional control systems."
- }[t]||"ctOS-connected simulated infrastructure."}
+ }[t]||"ctOS-connected infrastructure."}
 function vectors(t){return {
  school:["CAMERAS","SIGNAGE","PA","LOCKS"],church:["LIGHTS","AV","BELLS","CAMERAS"],library:["TERMINALS","LIGHTS","CAMERAS","PRINTERS"],
  hospital:["CAMERAS","ELEVATORS","SIGNAGE"],police:["CAMERAS","GATES","DISPATCH DECOY"],transit:["SIGNALS","BOARDS","CAMERAS"],
@@ -213,7 +279,7 @@ function vectors(t){return {
  }[t]||["ACCESS","SCAN"]}
 function runHack(p,d){
  const t=TYPES[p.type], body=$("#sheetBody");let prog=0, duration=Math.max(850,2400-S.upgrades.speed*260+t.diff*160);
- body.innerHTML=`<div class="card pulse"><h3>BREACH IN PROGRESS</h3><div class="muted">Fictional ctOS intrusion sequence</div><div class="hackline"><i></i></div><div class="console" id="console"></div></div>`;
+ body.innerHTML=`<div class="card pulse"><h3>BREACH IN PROGRESS</h3><div class="muted">ctOS intrusion sequence</div><div class="hackline"><i></i></div><div class="console" id="console"></div></div>`;
  const lines=["route.shadow_link()","spoof.ctos_token()","scan.virtual_ports()","inject.simulated_payload()","mask.trace_signature()","pivot.local_node()","decrypt.game_layer()"];
  const c=$("#console"),iv=setInterval(()=>{prog+=120;c.innerHTML+=`> ${lines[rnd(0,lines.length-1)]}<br>`;c.scrollTop=c.scrollHeight;if(prog>=duration){clearInterval(iv);resolveHack(p)}},120)
 }
@@ -226,6 +292,72 @@ function resolveHack(p){
  <div class="statgrid"><div class="stat"><span class="muted">CREDITS</span><b>+$${cash}</b></div><div class="stat"><span class="muted">XP</span><b>+${xp}</b></div></div>
  <div class="muted" style="margin-top:9px">${detected?"ctOS heat increased. Keep moving or use a cooldown operation.":"Signature masked successfully."}</div>
  <button class="btn" id="again">RETURN TO GRID</button></div>`;$("#again").onclick=closeSheet;
+}
+
+function makeDevices(){
+ const first=["Avery","Maya","Jordan","Eli","Noah","Riley","Morgan","Taylor","Cameron","Quinn","Alex","Sam","Jamie","Drew","Casey","Robin"];
+ const last=["Reed","Torres","Chen","Miller","Diaz","Patel","Brooks","Nguyen","Walker","Price","Kim","Martinez","Gray","Bennett"];
+ const jobs=["Teacher","Nurse","Contractor","Student","Barista","Mechanic","Accountant","Designer","Delivery Driver","Engineer","Cook","Retail Worker","Photographer","Office Manager","Electrician","Musician"];
+ const traits=["Frequent traveler","Online shopper","Night owl","Sports fan","Heavy texter","Pet owner","Gamer","Coffee regular","Fitness tracker","Music subscriber","Local volunteer","Commutes daily"];
+ const r=prng(hash((S.lat||0).toFixed(4)+","+(S.lon||0).toFixed(4)+Math.floor(Date.now()/120000)));
+ devices=[];
+ const count=8+S.upgrades.scanner*2;
+ for(let i=0;i<count;i++){
+   const name=first[Math.floor(r()*first.length)]+" "+last[Math.floor(r()*last.length)];
+   const dist=Math.round(8+r()*(70+S.upgrades.scanner*18));
+   const worth=Math.round(10+r()*90)*(1+S.upgrades.scanner);
+   devices.push({
+     id:"d"+hash(name+i+Math.floor(Date.now()/120000)),
+     name,dist,job:jobs[Math.floor(r()*jobs.length)],
+     trait:traits[Math.floor(r()*traits.length)],
+     worth,security:1+Math.floor(r()*5),battery:25+Math.floor(r()*75),
+     used:false,tracked:S.trackedDevice===name
+   });
+ }
+}
+function profilerScan(){
+ let fx=$("#scanFx");fx.classList.remove("go");void fx.offsetWidth;fx.classList.add("go");
+ makeDevices();
+ const rows=devices.sort((a,b)=>a.dist-b.dist).map(d=>`
+ <div class="card device" data-device="${d.id}">
+   <div class="avatar">◉</div>
+   <div class="dmain"><b>${d.name}</b><div class="muted">${d.job} · ${d.dist}m · Phone ${d.battery}%</div>
+   <span class="tag">SEC ${d.security}</span><span class="tag">${d.trait}</span>${d.tracked?'<span class="tag green">TRACKED</span>':''}</div>
+   <div class="cyan">›</div>
+ </div>`).join("");
+ openSheet("PROFILER // NEARBY",`<div class="muted" style="margin-bottom:8px">Nearby personal devices detected: ${devices.length}</div>${rows}`);
+ $$(".device[data-device]").forEach(e=>e.onclick=()=>openDevice(devices.find(d=>d.id===e.dataset.device)));
+}
+function openDevice(d){
+ if(!d)return;
+ const actions=d.used?`<div class="muted">This device has already been accessed during the current scan.</div>`:`
+ <div class="row"><button class="btn deviceAction" data-a="data">DATA PULL</button><button class="btn deviceAction" data-a="cash">CASH ROUTE</button></div>
+ <div class="row"><button class="btn deviceAction" data-a="distraction">DISTRACT</button><button class="btn deviceAction" data-a="track">TRACK</button></div>`;
+ openSheet("PHONE // "+d.name,`
+ <div class="card"><h3>${d.name}</h3><div class="muted">${d.job} · ${d.dist}m away</div>
+ <div class="divider"></div>
+ <div class="statgrid"><div class="stat"><span class="muted">SECURITY</span><b>${d.security}/5</b></div><div class="stat"><span class="muted">BATTERY</span><b>${d.battery}%</b></div></div>
+ <div style="margin-top:9px"><span class="tag">${d.trait}</span><span class="tag">VALUE ~$${d.worth}</span></div></div>
+ <div class="card"><b>PHONE ACCESS</b>${actions}</div>
+ <button class="btn" id="backScan">← BACK TO SCAN</button>`);
+ $("#backScan").onclick=profilerScan;
+ $$(".deviceAction").forEach(b=>b.onclick=()=>deviceAction(d,b.dataset.a));
+}
+function deviceAction(d,a){
+ if(d.used && a!=="track")return;
+ let msg="",xp=0;
+ if(a==="data"){
+   xp=10+d.security*4;S.rep+=1+d.security;msg=`Data package acquired // +${xp} XP`;
+   gainXp(xp);d.used=true;
+ } else if(a==="cash"){
+   const gain=Math.max(8,Math.round(d.worth*(.45+S.upgrades.payout*.08)));
+   S.cash+=gain;S.heat=Math.min(100,S.heat+d.security*2);msg=`Account token routed // +$${gain}`;d.used=true;
+ } else if(a==="distraction"){
+   const drop=4+S.upgrades.stealth*2;S.heat=Math.max(0,S.heat-drop);msg=`Device distraction triggered // heat -${drop}`;d.used=true;
+ } else if(a==="track"){
+   S.trackedDevice=d.name;devices.forEach(x=>x.tracked=x.id===d.id);msg=`${d.name} marked in Profiler`;
+ }
+ save();updateHUD();toast(msg);openDevice(d);
 }
 function ensureMissions(){
  const day=new Date().toISOString().slice(0,10);if(S.lastDay!==day||!S.missions?.length){
@@ -245,9 +377,9 @@ function missionsView(){
 const ups={
  range:["REMOTE ACCESS","Increase interaction radius by 35m."],
  speed:["OVERCLK","Reduce breach sequence time."],
- stealth:["GHOST PROTOCOL","Reduce simulated trace chance."],
+ stealth:["GHOST PROTOCOL","Reduce trace chance."],
  payout:["DATA BROKER","Increase credits from every node."],
- scanner:["DEEP SCAN","Improve scan rewards and intel."]
+ scanner:["DEEP SCAN","Detect more nearby phones and extend profiler range."]
 };
 function skillsView(){
  let h=`<div class="card"><b>Skill points: <span class="cyan">${S.skill}</span></b><div class="muted">Level up to earn more.</div></div>`;
@@ -263,7 +395,7 @@ function profileView(){
 }
 function settingsView(){
  openSheet("SETTINGS",`<div class="card"><label class="toggle"><span><b>Use public OSM places</b><div class="muted">Schools, churches, libraries, civic facilities, etc.</div></span><input id="osm" type="checkbox" ${S.poisMode!=="procedural"?"checked":""}></label></div>
- <div class="card"><b>Privacy</b><div class="muted" style="margin-top:6px">GPS stays in this browser except when public-place lookup is enabled, which sends approximate coordinates to the OpenStreetMap Overpass service. No real network/device hacking occurs.</div></div>
+ <div class="card"><b>Privacy</b><div class="muted" style="margin-top:6px">GPS stays in this browser except when public-place lookup is enabled, which sends approximate coordinates to the OpenStreetMap Overpass service. Nearby phone profiles are generated locally by the game.</div></div>
  <div class="card"><button class="btn" id="gps">REFRESH GPS</button><button class="btn red" id="wipe">RESET ALL GAME DATA</button></div>`);
  $("#osm").onchange=e=>{S.poisMode=e.target.checked?"auto":"procedural";save();seedPOIs();if(e.target.checked)fetchRealPOIs()};
  $("#gps").onclick=startGPS;$("#wipe").onclick=()=>{if(confirm("Delete all Shadow Grid progress on this device?")){localStorage.removeItem("shadowgrid");location.reload()}}
@@ -292,6 +424,7 @@ function startGPS(){
    S.lat=pos.coords.latitude; S.lon=pos.coords.longitude; S.accuracy=pos.coords.accuracy;
    coord.textContent=`${label} ${S.lat.toFixed(5)}, ${S.lon.toFixed(5)} ±${Math.round(S.accuracy)}m`;
    save();
+   initRealMap();syncMapPosition();
    if(!pois.length||oldLat==null||distanceM(oldLat,oldLon,S.lat,S.lon)>90){
      seedPOIs();
      if(S.poisMode!=="procedural") fetchRealPOIs();
@@ -322,12 +455,14 @@ function startGPS(){
    {enableHighAccuracy:true, maximumAge:10000, timeout:20000}
  );
 }
-$("#locateBtn").onclick=()=>{startGPS();renderPOIs();toast("Location refresh requested")};
-$("#scanBtn").onclick=()=>{let fx=$("#scanFx");fx.classList.remove("go");void fx.offsetWidth;fx.classList.add("go");const bonus=1+S.upgrades.scanner;toast("SCAN // "+pois.filter(p=>distanceM(S.lat,S.lon,p.lat,p.lon)<180+bonus*40).length+" nodes nearby")};
+$("#locateBtn").onclick=()=>{startGPS();initRealMap();if(realMap&&S.lat!=null)realMap.setView([S.lat,S.lon],17,{animate:true});renderPOIs();toast("Recentered on GPS")};
+$("#scanBtn").onclick=profilerScan;
+$("#zoomIn").onclick=()=>{initRealMap();realMap?.zoomIn();toast("Map zoom +")};
+$("#zoomOut").onclick=()=>{initRealMap();realMap?.zoomOut();toast("Map zoom −")};
 setInterval(()=>{simTick++;if(S.heat>0){S.heat=Math.max(0,S.heat-.35);if(simTick%5===0){save();updateHUD()}}},1000);
 window.addEventListener("resize",renderPOIs);updateHUD();ensureMissions();startGPS();
 if("serviceWorker" in navigator){
-  window.addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js?v=3").catch(()=>{}));
+  window.addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js?v=5").catch(()=>{}));
 }
 })();
 </script>
