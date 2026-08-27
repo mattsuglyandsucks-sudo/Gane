@@ -1,4 +1,4 @@
-const CACHE="shadow-grid-v9";
+const CACHE="shadow-grid-v10";
 const CORE=["./","./index.html","./manifest.json","./icon-192.png","./icon-512.png"];
 
 self.addEventListener("install",event=>{
@@ -18,7 +18,7 @@ self.addEventListener("fetch",event=>{
   if(req.method!=="GET") return;
   const url=new URL(req.url);
 
-  if(url.hostname.includes("openstreetmap.org") || url.hostname==="unpkg.com"){
+  if(url.hostname.includes("openstreetmap.org") || url.hostname.includes("cartocdn.com") || url.hostname==="unpkg.com"){
     event.respondWith(fetch(req));
     return;
   }

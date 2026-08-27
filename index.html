@@ -31,7 +31,7 @@ linear-gradient(#05080d,#060b11)}
 .main{position:relative;flex:1;min-height:0;overflow:hidden}
 #map{position:absolute;inset:0;overflow:hidden;background:#071018}
 #leafletMap{position:absolute;inset:0;z-index:0;touch-action:none}
-#leafletMap .leaflet-tile-pane{filter:invert(.92) grayscale(.88) sepia(.55) saturate(3.3) hue-rotate(118deg) brightness(.62) contrast(1.55)}
+#leafletMap .leaflet-tile-pane{filter:brightness(.88) contrast(1.16) saturate(.65) hue-rotate(122deg)}
 #leafletMap .leaflet-control-attribution{font-size:8px;background:rgba(3,8,13,.72)!important;color:#7195a2!important}
 #leafletMap .leaflet-control-attribution a{color:#68dfe9!important}
 #leafletMap .leaflet-control-zoom{display:none}
@@ -124,6 +124,29 @@ box-shadow:0 0 0 4px rgba(53,246,223,.10),0 0 18px rgba(53,246,223,.55)!importan
 .objective{padding:7px 9px;background:#06111a;border:1px solid #163546;border-radius:6px;margin:5px 0}
 .bigNumber{font-size:25px;font-weight:900;color:#39f5ff}
 
+
+/* v10 world / nodes */
+#leafletMap .leaflet-tile{opacity:1!important}
+.sectorLabel{font:900 10px/1 system-ui;color:#67f7e7;letter-spacing:1px;text-shadow:0 0 8px #000;background:#031015cc;border:1px solid #1c615d;border-radius:4px;padding:4px 6px}
+.hackNode{width:58px;height:58px;position:relative;display:grid;place-items:center;filter:drop-shadow(0 0 8px rgba(64,255,232,.3))}
+.hackNode .hex{position:absolute;inset:3px;background:#06131a;border:2px solid #3ef5df;clip-path:polygon(25% 6%,75% 6%,100% 50%,75% 94%,25% 94%,0 50%);box-shadow:inset 0 0 12px rgba(62,245,223,.08)}
+.hackNode .core{z-index:2;width:28px;height:28px;border:1px solid #277a73;border-radius:6px;display:grid;place-items:center;background:#09202a;font-size:10px;font-weight:900;color:#d9fffb;letter-spacing:.4px}
+.hackNode .nodeType{position:absolute;z-index:3;top:58px;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:8px;font-weight:800;letter-spacing:.5px;color:#d8ffff;background:#031015ef;border:1px solid #1c4948;border-radius:3px;padding:2px 4px}
+.hackNode .nodeDist{position:absolute;z-index:3;top:-8px;right:-4px;font-size:8px;background:#031015;border:1px solid #255d5a;border-radius:8px;padding:2px 4px;color:#70e8dc}
+.hackNode.locked{filter:grayscale(.55) brightness(.65);opacity:.7}.hackNode.done .hex{border-color:#69ff9f}.hackNode.done .core{color:#69ff9f}
+.hackNode.long .hex{border-color:#ffd65c;animation:nodePulse 1.7s infinite}.hackNode.long .core{color:#ffd65c}
+@keyframes nodePulse{50%{filter:drop-shadow(0 0 8px rgba(255,214,92,.75))}}
+.sectorPanel{border:1px solid #225954;background:linear-gradient(180deg,#07191b,#071117)}
+.sectorOwner{font-size:18px;font-weight:900;color:#63f1e2}
+.timerBox{font:900 28px/1 ui-monospace,monospace;color:#ffd65c;text-align:center;padding:14px;border:1px solid #6c5c24;background:#171405;border-radius:8px;margin:9px 0}
+.routeChoice{border:1px solid #18404c;background:#07141c;border-radius:7px;padding:9px;margin:6px 0}
+.routeChoice b{display:block;margin-bottom:3px}
+.techTree{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.techNode{border:1px solid #1b3c49;background:#08151d;border-radius:8px;padding:9px;min-height:104px}
+.techNode b{display:block}.techNode .lvl{font-size:18px;color:#39f5ff}
+.actionGrid{display:grid;grid-template-columns:1fr 1fr;gap:7px}.actionGrid .btn{margin-top:0}
+.worldEvent{border-left:3px solid #ffd65c;background:#141205}
+
 </style>
 </head>
 <body>
@@ -149,7 +172,7 @@ box-shadow:0 0 0 4px rgba(53,246,223,.10),0 0 18px rgba(53,246,223,.55)!importan
       <div class="coords" id="coords">GPS: starting…</div>
       <div class="mapBtns">
   <button class="iconBtn" id="locateBtn" aria-label="Refresh GPS">◎</button>
-  <button class="iconBtn" id="scanBtn" aria-label="Profiler scan">⌁</button>
+  <button class="iconBtn" id="scanBtn" aria-label="Profiler scan">⌁</button><button class="iconBtn" id="sectorBtn" aria-label="Grid sector">▦</button>
   <div class="zoomCtl"><button class="iconBtn" id="zoomIn" aria-label="Zoom in">＋</button><button class="iconBtn" id="zoomOut" aria-label="Zoom out">−</button></div>
 </div>
     </div>
@@ -183,13 +206,13 @@ const TYPES={
  civic:{icon:"▥",name:"Civic Facility",min:20,max:190,diff:2,reward:[35,90]}
 };
 const initial={cash:0,xp:0,level:1,heat:0,hacks:0,rep:0,skill:0,lat:null,lon:null,accuracy:null,mapZoom:1.45,
- intel:0,fragments:0,seasonScore:0,networkRank:1,shield:100,lastRivalAttack:0,lastContractRefresh:0,
- upgrades:{range:0,speed:0,stealth:0,payout:0,scanner:0,firewall:0,encryption:0,honeypot:0,traceback:0},
- completed:{},missions:[],contracts:[],lastDay:"",poisMode:"auto",trackedDevice:null,rivalHistory:[],storyStep:0};
+ intel:0,fragments:0,seasonScore:0,networkRank:1,shield:100,lastRivalAttack:0,lastContractRefresh:0,lastScanAt:0,
+ upgrades:{range:0,speed:0,stealth:0,payout:0,scanner:0,firewall:0,encryption:0,honeypot:0,traceback:0,cpu:0,bandwidth:0,battery:0,storage:0,antenna:0,exploit:0},
+ completed:{},missions:[],contracts:[],lastDay:"",poisMode:"auto",trackedDevice:null,rivalHistory:[],storyStep:0,longJobs:[],sectorControl:{},sectorRep:{},inventory:{zeroDays:0,spoofKeys:0,dataCaches:0},worldEvents:[]};
 let S=Object.assign({},initial,JSON.parse(localStorage.getItem("shadowgrid")||"{}"));
 S.upgrades=Object.assign({},initial.upgrades,S.upgrades||{});
-S.contracts=S.contracts||[];S.rivalHistory=S.rivalHistory||[];S.intel=S.intel||0;S.fragments=S.fragments||0;S.seasonScore=S.seasonScore||0;S.networkRank=S.networkRank||1;S.shield=S.shield??100;
-let pois=[],watchId=null,selected=null,simTick=0,devices=[],realMap=null,playerMarker=null,poiMarkers=[],rivals=[];
+S.contracts=S.contracts||[];S.rivalHistory=S.rivalHistory||[];S.longJobs=S.longJobs||[];S.sectorControl=S.sectorControl||{};S.sectorRep=S.sectorRep||{};S.inventory=Object.assign({zeroDays:0,spoofKeys:0,dataCaches:0},S.inventory||{});S.worldEvents=S.worldEvents||[];S.intel=S.intel||0;S.fragments=S.fragments||0;S.seasonScore=S.seasonScore||0;S.networkRank=S.networkRank||1;S.shield=S.shield??100;
+let pois=[],watchId=null,selected=null,simTick=0,devices=[],realMap=null,playerMarker=null,poiMarkers=[],rivals=[],sectorLayers=[];
 const save=()=>localStorage.setItem("shadowgrid",JSON.stringify(S));
 function toast(t){let e=$("#toast");e.textContent=t;e.classList.add("show");clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove("show"),1800)}
 function rnd(a,b){return Math.floor(Math.random()*(b-a+1))+a}
@@ -227,10 +250,10 @@ function initRealMap(){
    zoomDelta:0.5
  }).setView([S.lat||42.3265,S.lon||-122.8756],17);
 
- L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{
+ L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",{
    maxZoom:19,
    minZoom:3,
-   attribution:'&copy; OpenStreetMap contributors',
+   attribution:'&copy; OpenStreetMap &copy; CARTO',
    crossOrigin:true,
    updateWhenIdle:false,
    keepBuffer:4
@@ -334,44 +357,51 @@ function renderPOIs(){
  initRealMap();
  if(!realMap)return;
  realMap.invalidateSize({pan:false});
+ renderSectors();
 
- const previous=poiMarkers;
- poiMarkers=[];
-
- const range=95+S.upgrades.range*35;
+ const previous=poiMarkers;poiMarkers=[];
+ const range=110+S.upgrades.range*35+S.upgrades.antenna*25;
  const bounds=realMap.getBounds().pad(.35);
  const visible=pois.map(p=>({p,d:Math.round(distanceM(S.lat,S.lon,p.lat,p.lon))}))
    .filter(o=>bounds.contains([o.p.lat,o.p.lon]))
    .sort((a,b)=>a.d-b.d)
-   .slice(0,28);
+   .slice(0,24);
 
+ const labels={school:"EDU",church:"COM",library:"DATA",hospital:"MED",police:"SEC",transit:"MOVE",utility:"GRID",camera:"CAM",tower:"LINK",bank:"FIN",parking:"PARK",civic:"CIV"};
  for(const o of visible){
    const {p,d}=o,t=TYPES[p.type],available=d<=range,done=!!S.completed[p.id];
-   const cls=done?"done":available?"available":"locked";
+   const longEligible=["bank","police","utility","tower","hospital"].includes(p.type);
+   const cls=(done?"done ":available?"available ":"locked ")+(longEligible?"long":"");
    const icon=L.divIcon({
      className:"",
-     html:`<div class="ctosPoi ${cls}"><span>${t.icon}</span><span class="poiDist">${d}m</span></div>`,
-     iconSize:[46,46],
-     iconAnchor:[23,23]
+     html:`<div class="hackNode ${cls}">
+       <div class="hex"></div><div class="core">${labels[p.type]||"NODE"}</div>
+       <div class="nodeDist">${d}m</div><div class="nodeType">${t.name}</div>
+     </div>`,
+     iconSize:[58,58],iconAnchor:[29,29]
    });
    const marker=L.marker([p.lat,p.lon],{icon,zIndexOffset:1000}).addTo(realMap);
-   marker.on("click",()=>openPOI(p,d));
-   poiMarkers.push(marker);
+   marker.on("click",()=>openPOI(p,d));poiMarkers.push(marker);
  }
-
- // Remove old markers only after the new marker set is on the map.
  previous.forEach(m=>realMap.removeLayer(m));
  syncMapPosition();
 }
 function openPOI(p,d){
- selected=p;const t=TYPES[p.type],range=95+S.upgrades.range*35,done=S.completed[p.id];
- openSheet(t.icon+" "+p.name,`
- <div class="card"><div class="muted">${p.real?"PUBLIC LOCATION // OSM":"PROCEDURAL GRID NODE"}</div>
- <h3>${t.name}</h3><div class="muted">Range ${d}m / ${range}m · Security ${t.diff}/5</div>
+ selected=p;const t=TYPES[p.type],range=110+S.upgrades.range*35+S.upgrades.antenna*25,done=S.completed[p.id];
+ const longEligible=["bank","police","utility","tower","hospital"].includes(p.type);
+ const sec=currentSector(),owned=sec.owner==="YOU";
+ openSheet(t.name,`
+ <div class="card"><div class="muted">${p.real?"PUBLIC LOCATION":"GRID NODE"} // ${sec.owner}</div>
+ <h3>${p.name}</h3><div class="muted">Range ${d}m / ${range}m · Security ${t.diff}/5</div>
  <div class="divider"></div><div>${flavor(p.type)}</div>
- <button class="btn" id="hackBtn" ${d>range?"disabled":""}>${done?"RE-ENTER SYSTEM":"INITIATE BREACH"}</button></div>
- <div class="card"><b>Available vectors</b><div class="muted" style="margin-top:5px">${vectors(p.type).join(" · ")}</div></div>`);
+ <div class="rewardLine"><span>${owned?"+12% owned-sector payout":"contested sector"}</span><span>Influence ${sec.rep}/100</span></div></div>
+ <div class="card"><b>CHOOSE APPROACH</b>
+ <div class="routeChoice"><b>QUICK BREACH</b><div class="muted">Seconds. Lower payout. Builds influence.</div><button class="btn" id="hackBtn" ${d>range?"disabled":""}>RUN QUICK BREACH</button></div>
+ ${longEligible?`<div class="routeChoice"><b>DEEP BREACH</b><div class="muted">${Math.ceil(longHackDuration(p.type)/60)} min persistent operation. Huge payout.</div><button class="btn" id="deepBtn" ${d>range?"disabled":""}>START DEEP BREACH</button></div>`:""}
+ <div class="routeChoice"><b>RECON</b><div class="muted">Safer. Earn a little Intel and reduce future risk.</div><button class="btn" id="reconBtn" ${d>range?"disabled":""}>RUN RECON</button></div></div>`);
  $("#hackBtn")?.addEventListener("click",()=>runHack(p,d));
+ $("#deepBtn")?.addEventListener("click",()=>startLongHack(p));
+ $("#reconBtn")?.addEventListener("click",()=>{S.intel+=1;S.heat=Math.max(0,S.heat-2);S.seasonScore+=3;addSectorInfluence(2);save();updateHUD();toast("Recon complete // +1 intel");openPOI(p,d)});
 }
 function flavor(t){return {
  school:"Campus access node detected. PA controls, doors, camera loops and digital signage are exposed through the local grid.",
@@ -394,7 +424,7 @@ function vectors(t){return {
  bank:["CAMERAS","VAULT DECOY","ALARM LOOP"],parking:["GATE","METERS","CAMERAS"],civic:["LIGHTS","CAMERAS","ACCESS"]
  }[t]||["ACCESS","SCAN"]}
 function runHack(p,d){
- const t=TYPES[p.type], body=$("#sheetBody");let prog=0, duration=Math.max(850,2400-S.upgrades.speed*260+t.diff*160);
+ const t=TYPES[p.type], body=$("#sheetBody");let prog=0, duration=Math.max(500,(2400-S.upgrades.speed*210+t.diff*160)*hackSpeedMultiplier());
  body.innerHTML=`<div class="card pulse"><h3>BREACH IN PROGRESS</h3><div class="muted">ctOS intrusion sequence</div><div class="hackline"><i></i></div><div class="console" id="console"></div></div>`;
  const lines=["route.shadow_link()","spoof.ctos_token()","scan.virtual_ports()","inject.simulated_payload()","mask.trace_signature()","pivot.local_node()","decrypt.game_layer()"];
  const c=$("#console"),iv=setInterval(()=>{prog+=120;c.innerHTML+=`> ${lines[rnd(0,lines.length-1)]}<br>`;c.scrollTop=c.scrollHeight;if(prog>=duration){clearInterval(iv);resolveHack(p)}},120)
@@ -402,7 +432,7 @@ function runHack(p,d){
 function resolveHack(p){
  const t=TYPES[p.type], stealth=S.upgrades.stealth*5, chance=Math.max(7,t.diff*13-stealth),detected=Math.random()*100<chance;
  const base=rnd(t.reward[0],t.reward[1]),cash=Math.round(base*(1+S.upgrades.payout*.14)),xp=18+t.diff*11;
- S.cash+=cash;S.hacks++;S.rep+=t.diff*2;S.intel+=Math.random()<(.10+t.diff*.035)?1:0;S.seasonScore+=5+t.diff*2;contractProgress("POI");contractProgress("CHAIN");gainXp(xp);if(detected){S.heat=Math.min(100,S.heat+rnd(10,22)+t.diff*3)}
+ S.cash+=Math.round(cash*(currentSector().owner==="YOU"?1.12:1));S.hacks++;S.rep+=t.diff*2;addSectorInfluence(4+t.diff);S.intel+=Math.random()<(.10+t.diff*.035)?1:0;S.seasonScore+=5+t.diff*2;contractProgress("POI");contractProgress("CHAIN");gainXp(xp);if(detected){S.heat=Math.min(100,S.heat+rnd(10,22)+t.diff*3)}
  S.completed[p.id]=Date.now();progressMissions(p.type);save();updateHUD();renderPOIs();
  $("#sheetBody").innerHTML=`<div class="card"><h3 class="${detected?"red":"green"}">${detected?"TRACE DETECTED":"ACCESS COMPLETE"}</h3>
  <div class="statgrid"><div class="stat"><span class="muted">CREDITS</span><b>+$${cash}</b></div><div class="stat"><span class="muted">XP</span><b>+${xp}</b></div></div>
@@ -526,7 +556,7 @@ function rivalNetwork(){
 }
 function openRival(r){
  if(!r)return;
- const chance=Math.max(12,Math.min(92,64+(S.level-r.level)*3+S.upgrades.stealth*5+S.upgrades.scanner*2-r.security*4));
+ const chance=Math.max(12,Math.min(92,64+(S.level-r.level)*3+S.upgrades.stealth*5+S.upgrades.scanner*2+S.upgrades.exploit*4-r.security*4));
  openSheet("TARGET // "+r.handle,`<div class="card rivalCard">
  <h3>${r.handle} <span class="factionBadge">${r.crew.name}</span></h3>
  <div class="muted">${r.status} · ${r.distance}m from your grid position</div>
@@ -626,6 +656,134 @@ function networkProfile(){
  <button class="btn" id="secMarket">DEVICE SECURITY</button>`);
  $("#secMarket").onclick=defenseMarket;
 }
+
+function sectorKey(lat,lon){
+ const step=.0042;
+ return Math.floor(lat/step)+":"+Math.floor(lon/step);
+}
+function sectorInfo(lat,lon){
+ const step=.0042, y=Math.floor(lat/step),x=Math.floor(lon/step),key=y+":"+x;
+ const crews=["UNCLAIMED","Null Saints","Ghostline","Red Circuit","Night Relay"];
+ let owner=S.sectorControl[key];
+ if(!owner){
+   const r=prng(hash(key));
+   owner=r()>.58?crews[1+Math.floor(r()*4)]:"UNCLAIMED";
+ }
+ const rep=S.sectorRep[key]||0;
+ return {key,x,y,step,owner,rep};
+}
+function renderSectors(){
+ if(!realMap||S.lat==null)return;
+ sectorLayers.forEach(l=>realMap.removeLayer(l));sectorLayers=[];
+ const c=sectorInfo(S.lat,S.lon), step=c.step;
+ for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
+  const x=c.x+dx,y=c.y+dy,key=y+":"+x,info=sectorInfo((y+.5)*step,(x+.5)*step);
+  const bounds=[[y*step,x*step],[(y+1)*step,(x+1)*step]];
+  const isPlayer=info.owner==="YOU";
+  const color=isPlayer?"#39f5ff":info.owner==="UNCLAIMED"?"#40626a":"#856e35";
+  const rect=L.rectangle(bounds,{color,weight:isPlayer?2:1,opacity:.55,fillColor:color,fillOpacity:isPlayer?.055:.018,interactive:false}).addTo(realMap);
+  sectorLayers.push(rect);
+  const center=[(y+.5)*step,(x+.5)*step];
+  const label=L.marker(center,{interactive:false,icon:L.divIcon({className:"",html:`<div class="sectorLabel">${isPlayer?"YOUR GRID":info.owner==="UNCLAIMED"?"OPEN SECTOR":info.owner}</div>`,iconSize:[100,16],iconAnchor:[50,8]})}).addTo(realMap);
+  sectorLayers.push(label);
+ }
+}
+function currentSector(){
+ return sectorInfo(S.lat||0,S.lon||0);
+}
+function sectorView(){
+ const s=currentSector(), owned=s.owner==="YOU";
+ const control=Math.min(100,s.rep);
+ openSheet("GRID SECTOR",`<div class="card sectorPanel"><div class="muted">CURRENT TERRITORY</div><div class="sectorOwner">${s.owner}</div>
+ <div class="bar"><i style="width:${control}%"></i></div><div class="muted">Your influence ${control}/100</div></div>
+ <div class="card"><b>SECTOR CONTROL</b><div>Hacks performed inside this area build influence. At 100 influence you can seize the sector. Owned sectors improve contract payouts and passive data income.</div>
+ <div class="rewardLine"><span>+${owned?12:0}% local payouts</span><span>${owned?"CONTROLLED":"CONTESTED"}</span></div>
+ ${control>=100&&!owned?'<button class="btn" id="claimSector">SEIZE SECTOR</button>':""}</div>
+ <div class="card"><b>SECTOR ACTIONS</b><div class="actionGrid">
+ <button class="btn" id="sweepSector">SIGNAL SWEEP</button><button class="btn" id="fortifySector">FORTIFY</button>
+ </div></div>`);
+ $("#claimSector")?.addEventListener("click",()=>{S.sectorControl[s.key]="YOU";S.seasonScore+=250;S.intel+=5;save();renderSectors();sectorView();toast("SECTOR CAPTURED // +250 score")});
+ $("#sweepSector").onclick=()=>{profilerScan()};
+ $("#fortifySector").onclick=()=>{if(owned&&S.cash>=250){S.cash-=250;S.shield=Math.min(100,S.shield+20);save();updateHUD();toast("Sector relay fortified")}else toast("Own this sector and have $250")};
+}
+function addSectorInfluence(n){
+ const s=currentSector();S.sectorRep[s.key]=Math.min(100,(S.sectorRep[s.key]||0)+n);save();
+}
+function hackSpeedMultiplier(){
+ return Math.max(.28,1-(S.upgrades.speed*.06+S.upgrades.cpu*.075+S.upgrades.exploit*.05));
+}
+function scanCooldown(){
+ return Math.max(5,25-S.upgrades.bandwidth*4-S.upgrades.scanner*2);
+}
+function longHackDuration(type){
+ const base={bank:360,police:330,utility:300,tower:240,hospital:300}[type]||240;
+ return Math.max(75,Math.round(base*hackSpeedMultiplier()));
+}
+function startLongHack(p){
+ const existing=S.longJobs.find(j=>j.poiId===p.id&&j.finish>Date.now());
+ if(existing){showLongJob(existing);return}
+ const sec=currentSector();
+ const duration=longHackDuration(p.type);
+ const t=TYPES[p.type], reward=Math.round((t.reward[1]*12+S.level*85)*(1+S.upgrades.payout*.12)*(sec.owner==="YOU"?1.12:1));
+ const job={id:"job"+Date.now(),poiId:p.id,name:p.name,type:p.type,start:Date.now(),finish:Date.now()+duration*1000,reward,intel:2+TYPES[p.type].diff,claimed:false};
+ S.longJobs.push(job);save();showLongJob(job);
+}
+function showLongJob(job){
+ const remain=Math.max(0,Math.ceil((job.finish-Date.now())/1000));
+ const fmt=s=>`${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`;
+ openSheet("DEEP BREACH",`<div class="card"><div class="muted">${job.name}</div><h3>Persistent extraction running</h3>
+ <div class="timerBox" id="jobTimer">${fmt(remain)}</div>
+ <div class="rewardLine"><span>$${job.reward}</span><span>◆ ${job.intel} INTEL</span></div>
+ <div class="muted">You can close the game. This operation finishes at the stored completion time.</div>
+ ${remain<=0&&!job.claimed?'<button class="btn" id="claimLong">COLLECT EXTRACTION</button>':''}</div>`);
+ const iv=setInterval(()=>{const e=$("#jobTimer");if(!e){clearInterval(iv);return}const r=Math.max(0,Math.ceil((job.finish-Date.now())/1000));e.textContent=fmt(r);if(r<=0){clearInterval(iv);showLongJob(job)}},1000);
+ $("#claimLong")?.addEventListener("click",()=>claimLongJob(job.id));
+}
+function claimLongJob(id){
+ const j=S.longJobs.find(x=>x.id===id);if(!j||j.claimed||Date.now()<j.finish)return;
+ j.claimed=true;S.cash+=j.reward;S.intel+=j.intel;S.seasonScore+=120;S.fragments+=Math.random()<.35?1:0;
+ addSectorInfluence(18);gainXp(90+TYPES[j.type].diff*20);save();updateHUD();toast("DEEP BREACH PAID // +$"+j.reward);profileView();
+}
+function activeJobsView(){
+ const jobs=S.longJobs.slice().sort((a,b)=>b.start-a.start).slice(0,12);
+ let h=`<div class="card"><b>BACKGROUND OPERATIONS</b><div class="muted">Long jobs continue while the app is closed.</div></div>`;
+ if(!jobs.length)h+=`<div class="card muted">No deep breaches running yet. High-value nodes such as banks, utility sites, police grids and relays can launch them.</div>`;
+ for(const j of jobs){
+   const ready=!j.claimed&&Date.now()>=j.finish,remain=Math.max(0,Math.ceil((j.finish-Date.now())/1000));
+   h+=`<div class="card"><b>${j.name}</b><div class="muted">${j.claimed?"COLLECTED":ready?"READY":"RUNNING"}</div>
+   <div>${j.claimed?"Complete":Math.floor(remain/60)+":"+String(remain%60).padStart(2,"0")}</div>
+   <div class="rewardLine"><span>$${j.reward}</span><span>◆${j.intel}</span></div>
+   ${ready?`<button class="btn jobOpen" data-j="${j.id}">COLLECT</button>`:!j.claimed?`<button class="btn jobOpen" data-j="${j.id}">VIEW</button>`:""}</div>`;
+ }
+ openSheet("BACKGROUND OPS",h);$$(".jobOpen").forEach(b=>b.onclick=()=>showLongJob(S.longJobs.find(j=>j.id===b.dataset.j)));
+}
+function deviceLab(){
+ const tech=[
+  ["cpu","PROCESSOR","Speeds all breaches, especially long operations.",650],
+  ["bandwidth","UPLINK","Reduces Profiler scan cooldown.",525],
+  ["battery","POWER CELL","Improves resilience and passive integrity recovery.",450],
+  ["storage","DATA VAULT","Raises maximum value retained from intel jobs.",475],
+  ["antenna","RF ARRAY","Extends physical hack range.",550],
+  ["exploit","EXPLOIT ENGINE","Improves speed and rival intrusion odds.",725]
+ ];
+ let h=`<div class="card"><div class="muted">PERSONAL RIG</div><h3>Build a device worth protecting.</h3>
+ <div class="rewardLine"><span>Hack speed ${Math.round(hackSpeedMultiplier()*100)}%</span><span>Scan cooldown ${scanCooldown()}s</span><span>Range +${S.upgrades.antenna*25}m</span></div></div><div class="techTree">`;
+ for(const [k,n,d,base] of tech){const lv=S.upgrades[k]||0,c=Math.round(base*(1+lv*.62));h+=`<div class="techNode"><b>${n}</b><div class="lvl">LV ${lv}/5</div><div class="muted">${d}</div><button class="btn labBuy" data-k="${k}" data-c="${c}" ${lv>=5?"disabled":""}>$${c}</button></div>`}
+ h+=`</div><button class="btn" id="securityFromLab">SECURITY MODULES</button>`;
+ openSheet("DEVICE LAB",h);
+ $$(".labBuy").forEach(b=>b.onclick=()=>{let k=b.dataset.k,c=+b.dataset.c;if(S.cash>=c&&S.upgrades[k]<5){S.cash-=c;S.upgrades[k]++;save();updateHUD();deviceLab();toast("Hardware upgraded")}else toast("Not enough credits")});
+ $("#securityFromLab").onclick=defenseMarket;
+}
+function worldEventsView(){
+ if(!S.worldEvents.length||Date.now()-(S.worldEvents[0]?.created||0)>15*60*1000){
+  const names=["Data Cache Drop","Crew Relay Exposed","Blackout Window","Unsecured Backhaul","Contractor Leak"];
+  S.worldEvents=[{id:"we"+Date.now(),name:names[rnd(0,names.length-1)],created:Date.now(),expires:Date.now()+12*60*1000,reward:rnd(250,650)}];save();
+ }
+ const e=S.worldEvents[0],left=Math.max(0,Math.ceil((e.expires-Date.now())/60000));
+ openSheet("WORLD EVENT",`<div class="card worldEvent"><h3>${e.name}</h3><div class="muted">Expires in ~${left} min</div>
+ <div>Temporary local opportunity. Complete 3 hacks in your current sector before expiry for a bonus payout.</div>
+ <div class="rewardLine"><span>$${e.reward}</span><span>+sector influence</span></div></div>`);
+}
 function makeDevices(){
  const first=["Avery","Maya","Jordan","Eli","Noah","Riley","Morgan","Taylor","Cameron","Quinn","Alex","Sam","Jamie","Drew","Casey","Robin"];
  const last=["Reed","Torres","Chen","Miller","Diaz","Patel","Brooks","Nguyen","Walker","Price","Kim","Martinez","Gray","Bennett"];
@@ -648,18 +806,20 @@ function makeDevices(){
  }
 }
 function profilerScan(){
+ const cooldown=scanCooldown(),elapsed=(Date.now()-S.lastScanAt)/1000;
+ if(elapsed<cooldown){toast(`Uplink cooling // ${Math.ceil(cooldown-elapsed)}s`);return}
+ S.lastScanAt=Date.now();save();
  let fx=$("#scanFx");fx.classList.remove("go");void fx.offsetWidth;fx.classList.add("go");
  makeDevices();
  const rows=devices.sort((a,b)=>a.dist-b.dist).map(d=>`
  <div class="card device" data-device="${d.id}">
-   <div class="avatar">◉</div>
-   <div class="dmain"><b>${d.name}</b><div class="muted">${d.job} · ${d.dist}m · Phone ${d.battery}%</div>
-   <span class="tag">SEC ${d.security}</span><span class="tag">${d.trait}</span>${d.tracked?'<span class="tag green">TRACKED</span>':''}</div>
-   <div class="cyan">›</div>
+   <div class="avatar">◉</div><div class="dmain"><b>${d.name}</b><div class="muted">${d.job} · ${d.dist}m · Phone ${d.battery}%</div>
+   <span class="tag">SEC ${d.security}</span><span class="tag">${d.trait}</span>${d.tracked?'<span class="tag green">TRACKED</span>':''}</div><div class="cyan">›</div>
  </div>`).join("");
- openSheet("PROFILER // NEARBY",`<div class="muted" style="margin-bottom:8px">Nearby personal devices detected: ${devices.length}</div>
- <div class="row"><button class="btn" id="scanRivals">OPERATORS</button><button class="btn" id="scanContracts">CONTRACTS</button></div>${rows}`);
- $("#scanRivals").onclick=rivalNetwork;$("#scanContracts").onclick=contractsView;
+ openSheet("PROFILER // NEARBY",`<div class="card"><b>UPLINK SCAN</b><div class="muted">${devices.length} devices // next scan ${cooldown}s // bandwidth LV ${S.upgrades.bandwidth}</div></div>
+ <div class="actionGrid"><button class="btn" id="scanRivals">OPERATORS</button><button class="btn" id="scanContracts">CONTRACTS</button>
+ <button class="btn" id="scanSector">SECTOR</button><button class="btn" id="scanJobs">BACKGROUND OPS</button></div>${rows}`);
+ $("#scanRivals").onclick=rivalNetwork;$("#scanContracts").onclick=contractsView;$("#scanSector").onclick=sectorView;$("#scanJobs").onclick=activeJobsView;
  $$(".device[data-device]").forEach(e=>e.onclick=()=>openDevice(devices.find(d=>d.id===e.dataset.device)));
 }
 function openDevice(d){
@@ -718,16 +878,16 @@ const ups={
 function skillsView(){
  let h=`<div class="card"><b>Skill points: <span class="cyan">${S.skill}</span></b><div class="muted">Level up to earn more.</div></div>`;
  for(const [k,v] of Object.entries(ups)){let lv=S.upgrades[k];h+=`<div class="card upgrade"><div class="uinfo"><b>${v[0]} <span class="cyan">LV ${lv}/5</span></b><div class="muted">${v[1]}</div></div><button class="btn up" data-k="${k}" ${S.skill<1||lv>=5?"disabled":""}>UP</button></div>`}
- openSheet("SKILL TREE",h);$$(".up").forEach(b=>b.onclick=()=>{let k=b.dataset.k;if(S.skill&&S.upgrades[k]<5){S.skill--;S.upgrades[k]++;save();renderPOIs();skillsView()}})
+ openSheet("SKILL TREE",h+`<button class="btn" id="openDeviceLab">OPEN DEVICE LAB</button>`);$("#openDeviceLab").onclick=deviceLab;$$(".up").forEach(b=>b.onclick=()=>{let k=b.dataset.k;if(S.skill&&S.upgrades[k]<5){S.skill--;S.upgrades[k]++;save();renderPOIs();skillsView()}})
 }
 function profileView(){
  const req=levelReq(S.level), pct=S.xp/req*100;
  openSheet("PROFILE",`<div class="card"><h3>SHADOW OPERATIVE</h3><div class="bar"><i style="width:${pct}%"></i></div><div class="muted">${S.xp}/${req} XP to next level</div></div>
  <div class="statgrid"><div class="stat"><span class="muted">TOTAL HACKS</span><b>${S.hacks}</b></div><div class="stat"><span class="muted">REPUTATION</span><b>${S.rep}</b></div><div class="stat"><span class="muted">CREDITS</span><b>$${S.cash}</b></div><div class="stat"><span class="muted">HEAT</span><b>${Math.round(S.heat)}</b></div><div class="stat"><span class="muted">INTEL</span><b>${S.intel}</b></div><div class="stat"><span class="muted">NETWORK</span><b>${rankName()}</b></div></div>
  <div class="card" style="margin-top:8px"><b>Passive heat decay</b><div class="muted">Heat fades over time while the game is open. High heat increases the pressure of future encounters.</div><button class="btn" id="cool">BURN $150 // DROP 25 HEAT</button></div>
- <button class="btn" id="networkProfile">NETWORK PROFILE</button><button class="btn" id="securityMarket">DEVICE SECURITY</button>`);
+ <div class="actionGrid"><button class="btn" id="networkProfile">NETWORK</button><button class="btn" id="securityMarket">SECURITY</button><button class="btn" id="deviceLab">DEVICE LAB</button><button class="btn" id="sectorProfile">GRID SECTOR</button><button class="btn" id="jobsProfile">BACKGROUND OPS</button><button class="btn" id="eventsProfile">WORLD EVENT</button></div>`);
  $("#cool").onclick=()=>{if(S.cash>=150&&S.heat>0){const before=S.heat;S.cash-=150;S.heat=Math.max(0,S.heat-25);if(before-S.heat>=20)contractProgress("HEAT");save();updateHUD();profileView()}else toast("Not enough credits or no heat to clear")};
- $("#networkProfile").onclick=networkProfile;$("#securityMarket").onclick=defenseMarket
+ $("#networkProfile").onclick=networkProfile;$("#securityMarket").onclick=defenseMarket;$("#deviceLab").onclick=deviceLab;$("#sectorProfile").onclick=sectorView;$("#jobsProfile").onclick=activeJobsView;$("#eventsProfile").onclick=worldEventsView
 }
 function settingsView(){
  openSheet("SETTINGS",`<div class="card"><label class="toggle"><span><b>Use public OSM places</b><div class="muted">Schools, churches, libraries, civic facilities, etc.</div></span><input id="osm" type="checkbox" ${S.poisMode!=="procedural"?"checked":""}></label></div>
@@ -792,13 +952,13 @@ function startGPS(){
  );
 }
 $("#locateBtn").onclick=()=>{startGPS();initRealMap();if(realMap&&S.lat!=null){realMap.invalidateSize();realMap.setView([S.lat,S.lon],Math.max(realMap.getZoom(),16),{animate:true})}renderPOIs();toast("Recentered on GPS")};
-$("#scanBtn").onclick=profilerScan;
+$("#scanBtn").onclick=profilerScan;$("#sectorBtn").onclick=sectorView;
 $("#zoomIn").onclick=()=>{initRealMap();realMap?.zoomIn();toast("Map zoom +")};
 $("#zoomOut").onclick=()=>{initRealMap();realMap?.zoomOut();toast("Map zoom −")};
-setInterval(()=>{simTick++;if(S.heat>0){S.heat=Math.max(0,S.heat-.35);if(simTick%5===0){save();updateHUD()}}if(simTick%15===0)maybeIncomingAttack();},1000);
+setInterval(()=>{simTick++;if(S.heat>0){S.heat=Math.max(0,S.heat-.35);if(simTick%5===0){save();updateHUD()}}if(simTick%15===0)maybeIncomingAttack();if(simTick%10===0&&S.upgrades.battery>0&&S.shield<100){S.shield=Math.min(100,S.shield+S.upgrades.battery*.15);save();}},1000);
 window.addEventListener("resize",()=>{realMap?.invalidateSize();renderPOIs()});updateHUD();ensureMissions();ensureContracts();startGPS();
 if("serviceWorker" in navigator){
-  window.addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js?v=9").catch(()=>{}));
+  window.addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js?v=10").catch(()=>{}));
 }
 })();
 </script>
